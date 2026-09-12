@@ -1,6 +1,9 @@
 # Member C role brief — local only
 docs/roles/CallMeMaybe-C-Backend-Gate.md
 
+# Member A role brief — local only
+docs/roles/CallMeMaybe-A-Telephony.md
+
 # Secrets
 .env
 .env.local
