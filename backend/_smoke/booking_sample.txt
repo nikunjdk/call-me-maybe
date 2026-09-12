@@ -1,0 +1,7 @@
+Passenger Name: Priya Malhotra
+Confirmation / PNR: ZK9M4P
+Airline: United Airlines
+Flight: UA 482
+Date: 2026-10-18
+Route: SFO to ORD
+Class: Economy

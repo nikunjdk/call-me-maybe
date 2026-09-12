@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[1]
 AGENT_DIR = ROOT / "agent"
 load_dotenv(ROOT / "backend" / ".env")
+load_dotenv(ROOT / "backend" / ".env.local", override=True)
 
 API = "https://api.elevenlabs.io/v1"
 

@@ -12,12 +12,10 @@ Python 3.11, FastAPI. Transcript turns run the two-tier policy gate (fail closed
 
 ```bash
 cd backend
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+./start.sh
 ```
+
+`start.sh` creates `.venv` if needed. Put API keys in `backend/.env.local` — that file is not overwritten when the README `cp .env.example .env` command runs.
 
 Run from `backend/` so `app` imports resolve. OpenAPI: http://localhost:8000/docs
 

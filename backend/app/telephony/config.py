@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from pathlib import Path
 
-from dotenv import load_dotenv
+from app.envload import load_app_env
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_app_env()
 
 
 def _env(name: str, default: str = "") -> str:

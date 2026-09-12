@@ -16,8 +16,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from dotenv import load_dotenv
-
+from app.envload import load_app_env
 from app.llm.provider import chat, reset_providers
 from app.policy.gate import classify
 
@@ -335,7 +334,7 @@ def pick_model(results: list[VariantResult], budget_ms: int) -> str:
 
 
 async def main_async(args: argparse.Namespace) -> None:
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_app_env()
     cases = load_eval_set(Path(args.eval_set))
     budget_ms = int(os.environ.get("TURN_BUDGET_MS", str(args.budget)))
     names = [n.strip() for n in args.compare.split(",") if n.strip()] if args.compare else [args.variant]
