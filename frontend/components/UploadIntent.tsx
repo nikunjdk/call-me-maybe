@@ -80,7 +80,7 @@ export function UploadIntent({
         >
           <p className="font-display text-2xl text-ink">Drop a booking</p>
           <p className="mt-1 text-sm text-muted">
-            PDF or screenshot. Gemini reads the booking fields.
+            PDF or screenshot. Grok reads the booking fields.
           </p>
           <input
             ref={inputRef}

@@ -6,7 +6,7 @@ Shared API contract: [`docs/contract.md`](docs/contract.md).
 
 ## Backend (Member C)
 
-Python 3.11, FastAPI. Transcript turns run the two-tier policy gate (fail closed). Booking extract / plan / summary go through the provider module (Gemini + Grok) and fall back to canned data if those keys are missing. Optional MongoDB Atlas write-through.
+Python 3.11, FastAPI. Transcript turns run the two-tier policy gate (fail closed). Booking extract / plan / summary go through the provider module (Grok; PDFs text-extracted locally with pypdf) and fall back to canned data if those keys are missing. Optional MongoDB Atlas write-through.
 
 **Live tier-1 model:** `IFM/K2-Horizon-375B-A23B` (only hosted K2 size that classified). Measured on 40 labelled turns: accuracy 0.975, **0 false allows**, 1 false escalate, p50 267ms, p95 1758ms. See [`policy/bench_results.md`](policy/bench_results.md).
 
