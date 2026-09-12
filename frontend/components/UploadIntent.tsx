@@ -15,10 +15,7 @@ function ExtractedChips({ extracted }: { extracted: Extracted }) {
   return (
     <ul className="mt-3 flex flex-wrap gap-2">
       {items.map((item) => (
-        <li
-          key={item}
-          className="rounded-sm border border-line bg-paper px-2.5 py-1 text-sm text-fg"
-        >
+        <li key={item} className="chip">
           {item}
         </li>
       ))}
@@ -47,18 +44,7 @@ export function UploadIntent({
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-          Upload + intent
-        </p>
-        <h1 className="mt-2 font-display text-4xl leading-tight text-ink">
-          Hand us the ticket.
-          <br />
-          Tell us what to do.
-        </h1>
-      </div>
-
+    <div className="space-y-6">
       {!extracted ? (
         <button
           type="button"
@@ -74,13 +60,14 @@ export function UploadIntent({
             takeFile(event.dataTransfer.files[0]);
           }}
           disabled={busy}
-          className={`flex min-h-48 w-full flex-col items-start justify-end rounded-sm border border-dashed px-6 py-5 text-left transition-colors ${
-            dragging ? "border-ink bg-paper" : "border-line bg-paper/60"
+          className={`card flex min-h-64 w-full flex-col items-start justify-center px-7 py-8 text-left ${
+            dragging ? "ring-4 ring-violet-300/70" : ""
           }`}
         >
-          <p className="font-display text-2xl text-ink">Drop a booking</p>
-          <p className="mt-1 text-sm text-muted">
-            PDF or screenshot. Gemini reads the booking fields.
+          <p className="chip">PDF or screenshot</p>
+          <p className="mt-4 font-display text-3xl text-ink">Drop a booking</p>
+          <p className="mt-2 max-w-xl text-lg text-muted">
+            Here&apos;s my number — so extract this, maybe.
           </p>
           <input
             ref={inputRef}
@@ -91,40 +78,35 @@ export function UploadIntent({
           />
         </button>
       ) : (
-        <div className="rounded-sm border border-line bg-paper px-6 py-5">
-          <p className="text-sm text-muted">Extracted from the booking</p>
+        <div className="card px-7 py-8">
+          <p className="text-lg text-muted">Extracted from the booking</p>
           <ExtractedChips extracted={extracted} />
+          <form
+            className="mt-6 space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const next = goal.trim();
+              if (!next) return;
+              onPlan(next);
+            }}
+          >
+            <label className="kicker block">What should we do?</label>
+            <input
+              value={goal}
+              onChange={(event) => setGoal(event.target.value)}
+              className="field"
+              placeholder="cancel this flight"
+            />
+            <button
+              type="submit"
+              disabled={busy || !goal.trim()}
+              className="btn btn-primary w-full sm:w-auto"
+            >
+              Show the plan
+            </button>
+          </form>
         </div>
       )}
-
-      {extracted ? (
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const next = goal.trim();
-            if (!next) return;
-            onPlan(next);
-          }}
-        >
-          <label className="block text-[11px] uppercase tracking-[0.18em] text-muted">
-            What should we do?
-          </label>
-          <input
-            value={goal}
-            onChange={(event) => setGoal(event.target.value)}
-            className="w-full rounded-sm border border-line bg-paper px-4 py-3 text-base text-fg outline-none focus:border-ink"
-            placeholder="cancel this flight"
-          />
-          <button
-            type="submit"
-            disabled={busy || !goal.trim()}
-            className="rounded-sm bg-ink px-5 py-2.5 text-sm tracking-wide text-paper disabled:opacity-60"
-          >
-            Show the plan
-          </button>
-        </form>
-      ) : null}
     </div>
   );
 }
