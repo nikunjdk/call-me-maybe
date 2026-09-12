@@ -3,12 +3,12 @@
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
-import { applyEvent, isLiveCallSignal } from "./applyEvent";
+import { applyEvent, isLiveCallSignal, turnsFromSession } from "./applyEvent";
 import { fakeEventsMode, STORAGE_KEY, wsUrl } from "./env";
 import { runFakeReplay } from "./fakeReplay";
 import { pathFor, routes } from "./paths";
 import { screenFor } from "./screen";
-import { destroyVoice, joinMuted, unmuteCall } from "./twilioDevice";
+import { connectIfNeeded, destroyVoice, joinMuted, unmuteCall } from "./twilioDevice";
 import type {
   EventEnvelope,
   Extracted,
@@ -112,10 +112,11 @@ export function useDemoSession() {
           extracted: session.extracted,
           plan: session.plan,
           summary: session.summary,
-          turns: [],
+          turns: turnsFromSession(session),
           escalationReason: null,
-          attentionStartedAt:
-            session.state === "HUMAN_CONTROL" || session.state === "SUMMARIZED"
+          attentionStartedAt: session.human_unmuted_ts
+            ? session.human_unmuted_ts * 1000
+            : session.state === "HUMAN_CONTROL" || session.state === "SUMMARIZED"
               ? Date.now()
               : null,
         });
@@ -136,20 +137,33 @@ export function useDemoSession() {
 
   useEffect(() => {
     if (!demo.sessionId) return;
-    const socket = new WebSocket(wsUrl(demo.sessionId));
-    socket.onmessage = (message) => {
-      try {
-        const event = JSON.parse(message.data as string) as EventEnvelope;
-        if (!fakeSource.current && isLiveCallSignal(event)) {
-          liveCallRef.current = true;
+    let stopped = false;
+    let socket: WebSocket | null = null;
+    let retry: number | undefined;
+
+    const connect = () => {
+      socket = new WebSocket(wsUrl(demo.sessionId!));
+      socket.onmessage = (message) => {
+        try {
+          const event = JSON.parse(message.data as string) as EventEnvelope;
+          if (!fakeSource.current && isLiveCallSignal(event)) {
+            liveCallRef.current = true;
+          }
+          setDemo((current) => applyEvent(current, event));
+        } catch {
+          // ignore malformed frames
         }
-        setDemo((current) => applyEvent(current, event));
-      } catch {
-        // ignore malformed frames
-      }
+      };
+      socket.onclose = () => {
+        if (stopped) return;
+        retry = window.setTimeout(connect, 1000);
+      };
     };
+    connect();
     return () => {
-      socket.close();
+      stopped = true;
+      if (retry !== undefined) window.clearTimeout(retry);
+      socket?.close();
     };
   }, [demo.sessionId]);
 
@@ -202,6 +216,20 @@ export function useDemoSession() {
       cancelled = true;
     };
   }, [demo.sessionId, demo.state]);
+
+  useEffect(() => {
+    if (demo.state !== "DIALING" && demo.state !== "IN_CALL") return;
+    const timer = window.setTimeout(() => {
+      void connectIfNeeded().then((ok) => {
+        if (ok) {
+          setVoiceStatus((status) =>
+            status === "off" || status === "unavailable" ? "muted" : status,
+          );
+        }
+      });
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [demo.state]);
 
   useEffect(() => {
     if (!demo.attentionStartedAt || demo.summary) return;
@@ -354,10 +382,23 @@ export function useDemoSession() {
     if (!demo.sessionId) return;
     setBusy(true);
     setError(null);
+    const localOnly =
+      fakeSource.current ||
+      voiceStatus === "unavailable" ||
+      voiceStatus === "off";
     try {
-      await api.takeover(demo.sessionId);
-    } catch {
-      // 404 is expected until C adds the route
+      const ok = await api.takeover(demo.sessionId);
+      if (!ok && !localOnly) {
+        setError("Takeover failed — the browser leg may not have joined yet.");
+        setBusy(false);
+        return;
+      }
+    } catch (err) {
+      if (!localOnly) {
+        setError(err instanceof Error ? err.message : "Takeover failed");
+        setBusy(false);
+        return;
+      }
     }
     unmuteCall();
     takenOverRef.current = true;
@@ -370,7 +411,7 @@ export function useDemoSession() {
     takeoverWaiters.current.forEach((resolve) => resolve());
     takeoverWaiters.current = [];
     setBusy(false);
-  }, [demo.sessionId]);
+  }, [demo.sessionId, voiceStatus]);
 
   const reset = useCallback(() => {
     replayAbort.current?.abort();

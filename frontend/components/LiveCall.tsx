@@ -67,6 +67,9 @@ export function LiveCall({
             {statusLabel(state)}
           </h1>
           <p className="mt-2 text-sm text-muted">{voiceNote}</p>
+          <p className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted">
+            ElevenLabs Scribe · each rep turn is gated
+          </p>
           {escalationReason ? (
             <p className="mt-2 text-sm text-escalate">{escalationReason}</p>
           ) : null}
@@ -82,6 +85,7 @@ export function LiveCall({
             <li key={`${turn.ts}-${index}`} className="border-t border-line pt-4">
               <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
                 {speakerLabel(turn.speaker)}
+                {turn.source === "elevenlabs" ? " · ElevenLabs" : ""}
               </p>
               <p className="mt-1 text-base leading-relaxed text-fg">{turn.text}</p>
               {turn.verdict ? <VerdictChip verdict={turn.verdict} /> : null}

@@ -71,6 +71,14 @@ def main() -> None:
                 "tts": {
                     "voice_id": cfg["voice_id"],
                     "model_id": cfg["tts_model_id"],
+                    "agent_output_audio_format": cfg.get("telephony", {}).get(
+                        "output_format", "ulaw_8000"
+                    ),
+                },
+                "asr": {
+                    "user_input_audio_format": cfg.get("telephony", {}).get(
+                        "input_format", "ulaw_8000"
+                    ),
                 },
                 "agent": {
                     "first_message": cfg["first_message"],
@@ -78,6 +86,12 @@ def main() -> None:
                     "dynamic_variables": {
                         "dynamic_variable_placeholders": placeholders
                     },
+                },
+                "turn": {
+                    "turn_timeout": cfg.get("turn_taking", {}).get("turn_timeout", 7),
+                    "silence_end_call_timeout": cfg.get("turn_taking", {}).get(
+                        "silence_end_call_timeout", -1
+                    ),
                 },
                 "conversation": {
                     "turn_timeout": cfg.get("turn_taking", {}).get("turn_timeout", 7),
@@ -98,6 +112,7 @@ def main() -> None:
         f"Configure ElevenLabs post-call / conversation webhook → "
         f"{base}/agent/elevenlabs/event"
     )
+    print("TTS/ASR formats patched to ulaw_8000 for Twilio register_call")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CallMeMaybe — architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --canvas: #f7f4ef;
+      --ink: #1b3a4b;
+      --paper: #fffcf7;
+      --fg: #1c1917;
+      --muted: #6f6a64;
+      --line: #e7e0d6;
+      --allow: #2f6b4f;
+      --escalate: #b5472a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--canvas);
+      color: var(--fg);
+      font-family: "Source Sans 3", system-ui, sans-serif;
+    }
+    .slide {
+      min-height: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 36px 48px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    h1 {
+      font-family: Newsreader, Georgia, serif;
+      font-weight: 600;
+      font-size: 42px;
+      color: var(--ink);
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .metric {
+      margin: 18px 0 28px;
+      font-family: Newsreader, Georgia, serif;
+      font-size: 28px;
+      color: var(--ink);
+    }
+    .metric strong { font-weight: 600; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 28px;
+      flex: 1;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 20px 22px;
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .legs {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .leg {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+    }
+    .leg:first-child { border-top: 0; padding-top: 0; }
+    .tag {
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .gate {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .step {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px;
+    }
+    .step span:last-child { color: var(--muted); }
+    .sponsors {
+      margin-top: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .claim {
+      margin-top: 18px;
+      font-size: 16px;
+    }
+    .claim em { font-style: normal; color: var(--escalate); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <h1>CallMeMaybe</h1>
+    <p class="lede">The agent makes the call. You join only when a human decision is required.</p>
+    <p class="metric">Minimize <strong>human attention seconds</strong> · never spend money without you.</p>
+    <div class="grid">
+      <div class="card">
+        <h2>Three legs · one conference</h2>
+        <div class="legs">
+          <div class="leg">
+            <div class="tag">A</div>
+            <div>Simulated airline rep · PSTN · scripted fee line</div>
+          </div>
+          <div class="leg">
+            <div class="tag">B</div>
+            <div>ElevenLabs agent · identifies as AI · four permitted actions</div>
+          </div>
+          <div class="leg">
+            <div class="tag">C</div>
+            <div>Your browser · joined muted · one click to take over</div>
+          </div>
+        </div>
+        <p class="claim">Attention clock stays at <strong>00:00</strong> until takeover. Then it counts. That’s the pitch.</p>
+      </div>
+      <div class="card">
+        <h2>Two-tier gate · fail closed</h2>
+        <div class="gate">
+          <div class="step"><span>Hard net</span><span>tier 0 · fees, cards, identity</span></div>
+          <div class="step"><span>K2 every turn</span><span>tier 1 · hosted IFM</span></div>
+          <div class="step"><span>Grok if uncertain</span><span>tier 2 · &lt; 0.75 confidence</span></div>
+          <div class="step"><span>Any failure</span><span>ESCALATE · degraded</span></div>
+        </div>
+        <p class="claim">Once the gate says <em>ESCALATE</em>, no further agent turns. By construction.</p>
+      </div>
+    </div>
+    <p class="sponsors">Grok · Cursor · IFM K2 · ElevenLabs · Gemini · Twilio · Vultr · MongoDB Atlas · Auth0</p>
+  </main>
+</body>
+</html>

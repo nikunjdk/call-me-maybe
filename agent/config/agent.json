@@ -27,6 +27,6 @@
     "note": "ElevenLabs native warm-transfer if conference path fails at T-6"
   },
   "escalate_tool_id": "tool_8001m2acejwmfnbats6h64jnfx82",
-  "webhook_base_url": "http://127.0.0.1:8000",
+  "webhook_base_url": "https://207.148.20.54.sslip.io",
   "transcript_webhook_path": "/agent/elevenlabs/event"
 }

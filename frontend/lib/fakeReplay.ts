@@ -4,16 +4,19 @@ type TapeStep =
   | { wait: number; type: EventType; data: Record<string, unknown> }
   | { waitFor: "takeover" };
 
+/** Demo-tape label only. Live chips render whatever `provider_label` the event carries. */
+const PROVIDER_LABEL = "K2-375B · IFM API";
+
 const ALLOW: PolicyVerdict = {
   verdict: "ALLOW",
   trigger: "none",
   reason: "Routine booking lookup — within permitted actions.",
   confidence: 0.97,
   tier: 1,
-  latency_ms: 61,
-  tier1_latency_ms: 61,
+  latency_ms: 267,
+  tier1_latency_ms: 267,
   tier2_latency_ms: null,
-  provider_label: "K2",
+  provider_label: PROVIDER_LABEL,
   degraded: false,
   notes: [],
 };
@@ -21,15 +24,15 @@ const ALLOW: PolicyVerdict = {
 const ESCALATE: PolicyVerdict = {
   verdict: "ESCALATE",
   trigger: "money",
-  reason: "Rep introduced a change fee.",
-  confidence: 0.99,
-  tier: 1,
-  latency_ms: 58,
-  tier1_latency_ms: 58,
+  reason: "hard net: money / fee / payment-detail language",
+  confidence: 1,
+  tier: 0,
+  latency_ms: 4,
+  tier1_latency_ms: 0,
   tier2_latency_ms: null,
-  provider_label: "K2",
+  provider_label: PROVIDER_LABEL,
   degraded: false,
-  notes: [],
+  notes: ["hard net short-circuit"],
 };
 
 const TAPE: TapeStep[] = [
@@ -43,7 +46,6 @@ const TAPE: TapeStep[] = [
       text: "Hello, this is an AI assistant calling on behalf of Alex Chen. I have their booking reference ABC123 for United flight UA 482 on September 18 from San Francisco to New York. They would like to cancel this reservation.",
     },
   },
-  { wait: 350, type: "policy_verdict", data: { ...ALLOW, latency_ms: 54, tier1_latency_ms: 54 } },
   {
     wait: 1100,
     type: "transcript_turn",
@@ -61,7 +63,6 @@ const TAPE: TapeStep[] = [
       text: "They would like to cancel this reservation and request a refund to the original form of payment.",
     },
   },
-  { wait: 350, type: "policy_verdict", data: { ...ALLOW, latency_ms: 59, tier1_latency_ms: 59 } },
   {
     wait: 1800,
     type: "transcript_turn",

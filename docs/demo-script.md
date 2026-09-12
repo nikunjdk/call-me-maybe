@@ -31,8 +31,11 @@ API restart reseeds that session. Mongo write-through hydrates other sessions on
 | Escalate tool | `/agent/tool/escalate` |
 | Conversation / post-call | `/agent/elevenlabs/event` |
 | Contract turns | `/agent/transcript` |
+| Twilio Media Stream (Scribe) | `wss://…/twilio/media/{session_id}` |
 
 6. Atlas Network Access must allow `207.148.20.54`. Health: https://207.148.20.54.sslip.io/health
+7. Leg B requires `TWILIO_AGENT_NUMBER` whose Voice URL is `/twilio/voice/agent`. After prompt or audio-format changes, re-run `sync_agent.py` (patches `ulaw_8000`).
+8. Architecture slide: [`docs/architecture.html`](architecture.html)
 
 ## On stage (3 minutes)
 

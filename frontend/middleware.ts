@@ -45,7 +45,10 @@ export async function middleware(request: NextRequest) {
         cache: "no-store",
       });
       if (!res.ok) {
-        return NextResponse.redirect(new URL(routes.home, request.url));
+        if (res.status === 404) {
+          return NextResponse.redirect(new URL(routes.home, request.url));
+        }
+        return NextResponse.next();
       }
       const session = (await res.json()) as Session;
       const dest = pathFor(session.session_id, session.state, session.summary);
@@ -58,7 +61,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(dest, request.url));
       }
     } catch {
-      return NextResponse.redirect(new URL(routes.home, request.url));
+      return NextResponse.next();
     }
   }
 

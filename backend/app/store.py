@@ -79,6 +79,20 @@ def get_session_or_none(session_id: str) -> Session | None:
     return _sessions.get(session_id)
 
 
+async def ensure_session(session_id: str) -> Session | None:
+    """Memory first, then Mongo — Twilio/ElevenLabs webhooks land on this process."""
+    session = get_session_or_none(session_id)
+    if session is not None:
+        return session
+    from app.db import load_session
+
+    loaded = await load_session(session_id)
+    if loaded is None:
+        return None
+    _sessions[session_id] = loaded
+    return loaded
+
+
 def get_session(session_id: str) -> Session:
     session = get_session_or_none(session_id)
     if session is None:
@@ -134,6 +148,8 @@ def set_plan(session_id: str, plan: Plan) -> Session:
 
 def approve(session_id: str) -> Session:
     session = get_session(session_id)
+    if session.state == SessionState.PLAN_APPROVED:
+        return session
     require_state(session, SessionState.PLAN_PENDING)
     session.state = SessionState.PLAN_APPROVED
     _flush(session)
@@ -147,9 +163,17 @@ def append_verdict(session_id: str, verdict: PolicyVerdict) -> Session:
     return session
 
 
-def append_transcript(session_id: str, speaker: str, text: str) -> Session:
+def append_transcript(
+    session_id: str,
+    speaker: str,
+    text: str,
+    source: str | None = None,
+) -> Session:
     session = get_session(session_id)
-    session.transcripts.append({"speaker": speaker, "text": text})
+    row: dict = {"speaker": speaker, "text": text}
+    if source:
+        row["source"] = source
+    session.transcripts.append(row)
     _flush(session)
     return session
 

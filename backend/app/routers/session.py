@@ -11,6 +11,7 @@ from app.models import (
     PlanRequest,
     Session,
     SessionCreateResponse,
+    SessionState,
     StatePatchRequest,
     Summary,
     TimestampsRequest,
@@ -78,6 +79,9 @@ async def post_approve(session_id: str) -> ApproveResponse:
     except HTTPException as exc:
         if exc.status_code == 503:
             logger.info("A /dial skipped (Twilio unset) session_id=%s", session_id)
+        elif exc.status_code == 502:
+            logger.warning("A /dial failed session_id=%s", session_id, exc_info=True)
+            raise
         else:
             logger.warning(
                 "A /dial HTTP %s session_id=%s",
@@ -87,6 +91,7 @@ async def post_approve(session_id: str) -> ApproveResponse:
             )
     except Exception:
         logger.warning("A /dial failed session_id=%s", session_id, exc_info=True)
+        raise HTTPException(status_code=502, detail="twilio dial failed") from None
     session = get_session(session_id)
     return ApproveResponse(session_id=session_id, state=session.state)
 
@@ -113,11 +118,22 @@ async def get_session_blob(session_id: str) -> Session:
     return get_session(session_id)
 
 
+_SUMMARY_STATES = {
+    SessionState.ENDED,
+    SessionState.SUMMARIZED,
+}
+
+
 @router.get("/{session_id}/summary", response_model=Summary)
 async def get_summary(session_id: str) -> Summary:
     session = get_session(session_id)
     if session.summary is not None:
         return session.summary
+    if session.state not in _SUMMARY_STATES:
+        raise HTTPException(
+            status_code=409,
+            detail="summary available after the call ends",
+        )
     summary = await generate_summary(session)
     session = set_summary(session_id, summary)
     await emit_event(session_id, "summary_ready", summary.model_dump())

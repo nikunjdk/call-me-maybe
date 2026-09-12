@@ -21,12 +21,18 @@ Runtime helpers that call C's `/agent/*` routes live in
 backend/.venv/Scripts/python agent/sync_agent.py
 ```
 
-When a tunnel is up, set in `backend/.env` then re-sync:
+When a tunnel is up, set in `backend/.env` then re-run:
 
 ```env
 PUBLIC_BASE_URL=https://<public-backend-host>
 AGENT_WEBHOOK_BASE_URL=https://<public-backend-host>
 ```
 
+`sync_agent.py` also patches TTS/ASR to `ulaw_8000` (required for Twilio `register_call`).
+
 Point the ElevenLabs Agents conversation / post-call webhook at
 `{AGENT_WEBHOOK_BASE_URL}/agent/elevenlabs/event` so turns hit C's gate.
+
+Live Twilio audio is also transcribed by **Scribe v2 Realtime**: the rep TwiML
+starts a Media Stream to `wss://<PUBLIC_BASE_URL>/twilio/media/{session_id}`.
+Committed utterances run the policy gate the same as `/agent/transcript`.

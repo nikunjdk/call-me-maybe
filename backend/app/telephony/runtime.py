@@ -42,6 +42,7 @@ class CallRuntime:
     rep_call_sid: str | None = None
     agent_call_sid: str | None = None
     browser_call_sid: str | None = None
+    conversation_id: str | None = None
     dialing_ts: int = field(default_factory=lambda: int(time.time()))
     in_call_ts: int | None = None
     unmuted_ts: int | None = None

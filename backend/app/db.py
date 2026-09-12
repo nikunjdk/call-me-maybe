@@ -68,6 +68,15 @@ async def load_sessions(limit: int = 50) -> list[Session]:
     return sessions
 
 
+async def load_session(session_id: str) -> Session | None:
+    if _db is None:
+        return None
+    doc = await _db.sessions.find_one({"_id": session_id})
+    if not doc:
+        return None
+    return _session_from_doc(doc)
+
+
 async def persist_session(session: Session) -> None:
     if _db is None:
         return

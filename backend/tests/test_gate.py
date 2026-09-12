@@ -1,5 +1,6 @@
 """Failure paths first. Real localhost OpenAI-shaped server, not a mocked client."""
 
+from app.canned import canned_escalate
 from app.llm.provider import reset_providers
 from app.policy.gate import classify
 from app.policy.hard_net import hard_check
@@ -74,7 +75,15 @@ async def test_hard_net_overrides_wrong_allow(fake_llm) -> None:
     assert verdict.verdict == "ESCALATE"
     assert verdict.tier == 0
     assert verdict.trigger == "money"
-    assert any("overrode" in n for n in verdict.notes)
+    assert any("hard net" in n for n in verdict.notes)
+
+
+def test_hard_net_catches_scripted_fee_line() -> None:
+    hit = hard_check(
+        "Please note there is a two hundred dollar cancellation fee."
+    )
+    assert hit is not None
+    assert hit.trigger == "money"
 
 
 async def test_hard_net_stays_silent_on_benign(fake_llm) -> None:
@@ -95,3 +104,11 @@ async def test_uncertain_band_reaches_tier2(fake_llm) -> None:
     assert verdict.degraded is False
     assert verdict.tier2_latency_ms is not None
     assert any("uncertain" in n for n in verdict.notes)
+
+
+def test_canned_escalate_infers_money_trigger() -> None:
+    verdict = canned_escalate("Rep asked for a credit card for the $200 fee")
+    assert verdict.verdict == "ESCALATE"
+    assert verdict.trigger == "money"
+    assert verdict.tier == 0
+    assert "stub" not in verdict.provider_label

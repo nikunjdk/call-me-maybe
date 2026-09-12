@@ -4,7 +4,7 @@ AI agent that makes the phone calls you've been putting off, and hands you the p
 
 **Production (Vultr + TLS):** https://207.148.20.54.sslip.io
 
-Shared API contract: [`docs/contract.md`](docs/contract.md). Live demo runbook: [`docs/demo-script.md`](docs/demo-script.md).
+Shared API contract: [`docs/contract.md`](docs/contract.md). Live demo runbook: [`docs/demo-script.md`](docs/demo-script.md). Architecture slide: [`docs/architecture.html`](docs/architecture.html).
 
 **Gate (eval, n=40):** accuracy **0.975**, **0 false allows**, 1 false escalate, tier-2 rate **0.00**, p50 **267ms**, p95 **1758ms**. Live model `IFM/K2-Horizon-375B-A23B`. Numbers from [`policy/bench_results.md`](policy/bench_results.md) — do not quote others.
 

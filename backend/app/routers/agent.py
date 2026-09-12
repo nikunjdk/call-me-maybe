@@ -1,11 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request
 
-from app.canned import canned_escalate
-from app.db import persist_verdict
-from app.events import emit_event, emit_state
+from app.agent.ingest import ingest_tool_escalate, ingest_transcript
 from app.models import EscalateRequest, PolicyVerdict, Speaker, TranscriptRequest
-from app.policy.gate import classify
-from app.store import agent_turns_blocked, append_transcript, append_verdict, escalate, get_session
+from app.store import ensure_session, get_session
+from app.telephony.runtime import get_runtime
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -17,41 +15,6 @@ _SPEAKER_MAP = {
     "customer": "rep",
     "human": "user",
 }
-
-
-async def _ingest_transcript(session_id: str, speaker: Speaker, text: str) -> PolicyVerdict:
-    session = get_session(session_id)
-    if agent_turns_blocked(session):
-        raise HTTPException(
-            status_code=409,
-            detail="no further agent turns after ESCALATE",
-        )
-    await emit_event(
-        session_id,
-        "transcript_turn",
-        {"speaker": speaker, "text": text},
-    )
-    append_transcript(session_id, speaker, text)
-    verdict = await classify(text)
-    if verdict.verdict == "ESCALATE":
-        session = escalate(session_id, verdict)
-        await emit_event(
-            session_id,
-            "policy_verdict",
-            verdict.model_dump(),
-        )
-        await emit_event(
-            session_id,
-            "escalation",
-            {"reason": verdict.reason, "verdict": verdict.model_dump()},
-        )
-        await emit_state(session_id, session.state)
-        await persist_verdict(session_id, verdict)
-        return verdict
-    append_verdict(session_id, verdict)
-    await emit_event(session_id, "policy_verdict", verdict.model_dump())
-    await persist_verdict(session_id, verdict)
-    return verdict
 
 
 def _session_id_from_payload(payload: dict) -> str | None:
@@ -88,6 +51,29 @@ def _session_id_from_payload(payload: dict) -> str | None:
     return None
 
 
+def _conversation_id_from_payload(payload: dict) -> str | None:
+    for key in ("conversation_id", "conversationId"):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    data = payload.get("data")
+    if isinstance(data, dict):
+        for key in ("conversation_id", "conversationId"):
+            value = data.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def _remember_conversation(session_id: str, payload: dict) -> None:
+    conversation_id = _conversation_id_from_payload(payload)
+    if not conversation_id:
+        return
+    runtime = get_runtime(session_id)
+    if runtime is not None:
+        runtime.conversation_id = conversation_id
+
+
 def _map_speaker(role: str | None) -> Speaker | None:
     if not role:
         return None
@@ -99,23 +85,12 @@ def _map_speaker(role: str | None) -> Speaker | None:
 
 @router.post("/transcript", response_model=PolicyVerdict)
 async def post_transcript(body: TranscriptRequest) -> PolicyVerdict:
-    return await _ingest_transcript(body.session_id, body.speaker, body.text)
+    return await ingest_transcript(body.session_id, body.speaker, body.text)
 
 
 @router.post("/tool/escalate", response_model=PolicyVerdict)
 async def post_escalate(body: EscalateRequest) -> PolicyVerdict:
-    session = get_session(body.session_id)
-    if agent_turns_blocked(session):
-        raise HTTPException(
-            status_code=409,
-            detail="no further agent turns after ESCALATE",
-        )
-    verdict = canned_escalate(body.reason)
-    session = escalate(body.session_id, verdict)
-    await emit_event(body.session_id, "escalation", {"reason": body.reason, "verdict": verdict.model_dump()})
-    await emit_state(body.session_id, session.state)
-    await persist_verdict(body.session_id, verdict)
-    return verdict
+    return await ingest_tool_escalate(body.session_id, body.reason)
 
 
 @router.post("/elevenlabs/event")
@@ -140,19 +115,21 @@ async def post_elevenlabs_event(request: Request) -> dict:
             status_code=400,
             detail="session_id required (body or dynamic_variables)",
         )
-    get_session(session_id)
+    if await ensure_session(session_id) is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    _remember_conversation(session_id, payload)
 
     event_type = str(payload.get("type") or payload.get("event_type") or "").lower()
     verdicts: list[dict] = []
 
-    # Direct contract-shaped turn
     text = payload.get("text")
     speaker = _map_speaker(str(payload.get("speaker") or ""))
     if isinstance(text, str) and text.strip() and speaker:
-        verdict = await _ingest_transcript(session_id, speaker, text.strip())
+        verdict = await ingest_transcript(
+            session_id, speaker, text.strip(), source="elevenlabs"
+        )
         return {"ok": True, "processed": 1, "verdicts": [verdict.model_dump()]}
 
-    # Live client-style events
     if event_type in {"user_transcript", "tentative_user_transcript"}:
         ute = payload.get("user_transcription_event") or {}
         message = (
@@ -161,7 +138,9 @@ async def post_elevenlabs_event(request: Request) -> dict:
             or (ute.get("user_transcript") if isinstance(ute, dict) else None)
         )
         if isinstance(message, str) and message.strip():
-            verdict = await _ingest_transcript(session_id, "rep", message.strip())
+            verdict = await ingest_transcript(
+                session_id, "rep", message.strip(), source="elevenlabs"
+            )
             return {"ok": True, "processed": 1, "verdicts": [verdict.model_dump()]}
 
     if event_type in {"agent_response", "agent_response_correction"}:
@@ -171,22 +150,15 @@ async def post_elevenlabs_event(request: Request) -> dict:
         message = (
             payload.get("text")
             or payload.get("agent_response")
-            or (
-                are.get("agent_response")
-                if isinstance(are, dict)
-                else None
-            )
-            or (
-                are.get("corrected_agent_response")
-                if isinstance(are, dict)
-                else None
-            )
+            or (are.get("agent_response") if isinstance(are, dict) else None)
+            or (are.get("corrected_agent_response") if isinstance(are, dict) else None)
         )
         if isinstance(message, str) and message.strip():
-            verdict = await _ingest_transcript(session_id, "agent", message.strip())
+            verdict = await ingest_transcript(
+                session_id, "agent", message.strip(), source="elevenlabs"
+            )
             return {"ok": True, "processed": 1, "verdicts": [verdict.model_dump()]}
 
-    # Post-call transcription webhook
     data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
     transcript = data.get("transcript") if isinstance(data, dict) else None
     if isinstance(transcript, list):
@@ -198,7 +170,9 @@ async def post_elevenlabs_event(request: Request) -> dict:
             if not role or not isinstance(message, str) or not message.strip():
                 continue
             try:
-                verdict = await _ingest_transcript(session_id, role, message.strip())
+                verdict = await ingest_transcript(
+                    session_id, role, message.strip(), source="elevenlabs"
+                )
                 verdicts.append(verdict.model_dump())
             except HTTPException as exc:
                 if exc.status_code == 409:

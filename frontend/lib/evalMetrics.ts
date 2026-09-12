@@ -1,6 +1,7 @@
-/** Placeholder gate eval — swap when C's numbers land. */
+/** Measured numbers from policy/bench_results.md. Do not invent replacements. */
 export const EVAL_METRICS = {
-  tier1Accuracy: "94.2%",
-  p95LatencyMs: 61,
-  tier2EscalateRate: "8.4%",
+  tier1Accuracy: "97.5%",
+  p95LatencyMs: 1758,
+  falseAllows: 0,
+  tier2EscalateRate: "0%",
 };

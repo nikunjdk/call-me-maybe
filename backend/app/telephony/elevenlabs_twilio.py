@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from app.agent.settings import elevenlabs_agent_id, elevenlabs_api_key
 from app.models import Session
@@ -83,3 +85,23 @@ def register_agent_call_twiml(
     if isinstance(twiml, bytes):
         return twiml.decode("utf-8")
     return str(twiml)
+
+
+_CONV_ID = re.compile(r"conv(?:ersation)?[_-]?id=([A-Za-z0-9_-]+)", re.IGNORECASE)
+_CONV_TOKEN = re.compile(r"\b(conv_[A-Za-z0-9_-]+)\b")
+
+
+def conversation_id_from_twiml(twiml: str) -> str | None:
+    """Best-effort parse of the conversation id ElevenLabs embeds in Stream TwiML."""
+    match = _CONV_ID.search(twiml)
+    if match:
+        return match.group(1)
+    for url in re.findall(r"wss://[^\"'\s<]+", twiml):
+        parsed = urlparse(url.replace("&amp;", "&"))
+        for key, values in parse_qs(parsed.query).items():
+            if "conversation" in key.lower() and values:
+                return values[0]
+    token = _CONV_TOKEN.search(twiml)
+    if token:
+        return token.group(1)
+    return None

@@ -62,6 +62,12 @@ export type Summary = {
   human_attention_seconds: number;
 };
 
+export type TranscriptRow = {
+  speaker: Speaker | string;
+  text: string;
+  source?: string;
+};
+
 export type Session = {
   session_id: string;
   state: SessionState;
@@ -69,6 +75,10 @@ export type Session = {
   plan: Plan | null;
   summary: Summary | null;
   verdicts: PolicyVerdict[];
+  transcripts?: TranscriptRow[];
+  call_started_ts?: number | null;
+  human_unmuted_ts?: number | null;
+  call_ended_ts?: number | null;
 };
 
 export type EventEnvelope = {
@@ -83,6 +93,7 @@ export type Turn = {
   text: string;
   ts: number;
   verdict?: PolicyVerdict;
+  source?: string;
 };
 
 export type VoiceStatus = "off" | "muted" | "live" | "unavailable";

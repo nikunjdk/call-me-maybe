@@ -1,6 +1,7 @@
 import type {
   EventEnvelope,
   PolicyVerdict,
+  Session,
   SessionState,
   Speaker,
   Summary,
@@ -9,6 +10,12 @@ import type {
 
 export function attachVerdict(turns: Turn[], verdict: PolicyVerdict): Turn[] {
   const next = [...turns];
+  for (let i = next.length - 1; i >= 0; i -= 1) {
+    if (next[i].speaker === "rep" && !next[i].verdict) {
+      next[i] = { ...next[i], verdict };
+      return next;
+    }
+  }
   for (let i = next.length - 1; i >= 0; i -= 1) {
     if (!next[i].verdict) {
       next[i] = { ...next[i], verdict };
@@ -42,9 +49,14 @@ export function applyEvent<T extends { state: SessionState | null; turns: Turn[]
       const speaker = asSpeaker(event.data.speaker);
       const text = event.data.text;
       if (!speaker || typeof text !== "string") return current;
+      const source =
+        typeof event.data.source === "string" ? event.data.source : undefined;
       return {
         ...current,
-        turns: [...current.turns, { speaker, text, ts: event.ts }],
+        turns: [
+          ...current.turns,
+          { speaker, text, ts: event.ts, source },
+        ],
       };
     }
     case "policy_verdict": {
@@ -80,4 +92,28 @@ export function isLiveCallSignal(event: EventEnvelope): boolean {
   if (event.type !== "state_changed") return false;
   const state = asState(event.data.state);
   return state === "DIALING" || state === "IN_CALL";
+}
+
+export function turnsFromSession(session: Session): Turn[] {
+  const rows = session.transcripts ?? [];
+  const verdicts = session.verdicts ?? [];
+  let vi = 0;
+  const turns: Turn[] = [];
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    const speaker = asSpeaker(row.speaker);
+    if (!speaker || typeof row.text !== "string" || !row.text) continue;
+    const turn: Turn = {
+      speaker,
+      text: row.text,
+      ts: i,
+      source: typeof row.source === "string" ? row.source : undefined,
+    };
+    if (speaker === "rep" && vi < verdicts.length) {
+      turn.verdict = verdicts[vi];
+      vi += 1;
+    }
+    turns.push(turn);
+  }
+  return turns;
 }

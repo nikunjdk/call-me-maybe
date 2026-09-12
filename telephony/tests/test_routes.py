@@ -86,6 +86,23 @@ def test_rep_twiml_route_fee_trigger(client: TestClient):
     assert "Conference" not in response.text
 
 
+def test_media_websocket_accepts_twilio_frames(client: TestClient):
+    session_id = client.post("/api/session").json()["session_id"]
+    with client.websocket_connect(f"/twilio/media/{session_id}") as ws:
+        ws.send_json({"event": "connected", "protocol": "Call", "version": "1.0.0"})
+        ws.send_json(
+            {
+                "event": "start",
+                "start": {
+                    "streamSid": "MZ_test",
+                    "callSid": "CA_test",
+                    "customParameters": {"session_id": session_id},
+                },
+            }
+        )
+        ws.send_json({"event": "stop"})
+
+
 @patch("app.telephony.router.rest_client")
 @patch("app.telephony.router.load_config")
 def test_dial_then_takeover_unmutes(
@@ -103,16 +120,16 @@ def test_dial_then_takeover_unmutes(
 
     twilio = MagicMock()
     rest_client.return_value = twilio
-    twilio.conferences.return_value.participants.create.return_value = MagicMock(
-        call_sid="CA_rep",
-        conference_sid="CF1",
-    )
+    twilio.calls.create.return_value = MagicMock(sid="CA_rep", call_sid="CA_rep")
+    config.token_ready = False
 
     session_id = _approve_session(client)
     # approve() already invokes dial when Twilio is configured
     session = client.get(f"/api/session/{session_id}")
     assert session.status_code == 200
-    assert session.json()["state"] == "DIALING"
+    assert session.json()["state"] == "IN_CALL"
+    twilio.calls.create.assert_called()
+    assert twilio.calls.create.call_args.kwargs["to"] == "+15552222222"
 
     set_state(session_id, SessionState.IN_CALL)
     takeover = client.post(f"/api/session/{session_id}/takeover")
@@ -146,7 +163,8 @@ def test_status_dialing_to_in_call(client: TestClient):
 def test_status_does_not_end_on_single_leg_completed(client: TestClient):
     session_id = _approve_session(client)
     set_state(session_id, SessionState.IN_CALL)
-    start_call(session_id)
+    runtime = start_call(session_id)
+    runtime.conference_sid = "CF_keep_alive"
     response = client.post(
         f"/twilio/status?session_id={session_id}",
         data={

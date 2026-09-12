@@ -9,6 +9,7 @@
   --color-line: #e7e0d6;
   --color-allow: #2f6b4f;
   --color-escalate: #b5472a;
+  --color-degraded: #b8751a;
   --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
   --font-sans: var(--font-source), ui-sans-serif, system-ui, sans-serif;
 }

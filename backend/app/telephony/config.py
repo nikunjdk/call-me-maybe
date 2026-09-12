@@ -52,7 +52,15 @@ class TwilioConfig:
 
     @property
     def agent_leg_ready(self) -> bool:
-        return bool(self.public_base_url and self.caller_number)
+        from app.agent.settings import elevenlabs_agent_id, elevenlabs_api_key
+
+        return bool(
+            self.public_base_url
+            and self.caller_number
+            and self.agent_number
+            and elevenlabs_api_key()
+            and elevenlabs_agent_id()
+        )
 
     def missing_token(self) -> list[str]:
         names = [
@@ -88,6 +96,25 @@ class TwilioConfig:
             return None
         base = self.public_base_url.rstrip("/")
         return f"{base}/twilio/voice/agent?session_id={session_id}"
+
+    def media_stream_url(self, session_id: str) -> str | None:
+        """wss origin Twilio Media Streams use to reach Scribe."""
+        if not self.public_base_url:
+            return None
+        base = self.public_base_url.rstrip("/")
+        if base.startswith("https://"):
+            base = "wss://" + base[len("https://") :]
+        elif base.startswith("http://"):
+            base = "ws://" + base[len("http://") :]
+        else:
+            base = "wss://" + base
+        return f"{base}/twilio/media/{session_id}"
+
+    def rep_voice_url(self, session_id: str) -> str | None:
+        if not self.public_base_url:
+            return None
+        base = self.public_base_url.rstrip("/")
+        return f"{base}/twilio/voice/rep?session_id={session_id}"
 
 
 def load_config() -> TwilioConfig:

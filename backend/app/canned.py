@@ -63,16 +63,19 @@ def canned_plan(goal: str) -> Plan:
 
 
 def canned_escalate(reason: str) -> PolicyVerdict:
+    hit = hard_check(reason)
+    trigger = hit.trigger if hit is not None else "ambiguity"
+    label = os.getenv("TIER1_LABEL", "").strip() or "escalate tool"
     return PolicyVerdict(
         verdict="ESCALATE",
-        trigger="ambiguity",
+        trigger=trigger,
         reason=reason,
         confidence=1.0,
         tier=0,
         latency_ms=0,
         tier1_latency_ms=0,
         tier2_latency_ms=None,
-        provider_label="stub",
+        provider_label=label,
         degraded=False,
-        notes=["hour-one canned escalate"],
+        notes=["agent escalate tool"],
     )

@@ -10,7 +10,8 @@ from app.models import Trigger
 _CURRENCY = re.compile(r"[$€£¥]")
 _MONEY_WORDS = re.compile(
     r"\b(non[-\s]?refundable|change fee|cancellation fee|cancel(?:lation)? fee|"
-    r"penalty|penalties|fare difference|additional charge)\b",
+    r"penalty|penalties|fare difference|additional charge|"
+    r"(?:two hundred|\d{2,})\s+dollars?)\b",
     re.IGNORECASE,
 )
 _PAYMENT = re.compile(

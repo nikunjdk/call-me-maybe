@@ -78,9 +78,11 @@ export function UploadIntent({
             dragging ? "border-ink bg-paper" : "border-line bg-paper/60"
           }`}
         >
-          <p className="font-display text-2xl text-ink">Drop a booking</p>
+          <p className="font-display text-2xl text-ink">
+            {busy ? "Reading the booking…" : "Drop a booking"}
+          </p>
           <p className="mt-1 text-sm text-muted">
-            PDF or screenshot. Gemini reads the booking fields.
+            PDF or screenshot. Booking fields are extracted automatically.
           </p>
           <input
             ref={inputRef}

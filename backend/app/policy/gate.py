@@ -94,10 +94,35 @@ def _uncertain_threshold() -> float:
         return UNCERTAIN
 
 
+def _label() -> str:
+    return os.environ.get("TIER1_LABEL", "").strip() or "hard-net"
+
+
 async def classify(utterance: str, *, use_tier2: bool = True) -> PolicyVerdict:
     started = time.perf_counter()
     notes: list[str] = []
     hard = hard_check(utterance)
+
+    def wall() -> int:
+        return int((time.perf_counter() - started) * 1000)
+
+    # Pre-check must not wait on the model — the fee turn is the demo beat.
+    if hard is not None:
+        notes.append(hard.reason)
+        notes.append("hard net short-circuit")
+        return PolicyVerdict(
+            verdict="ESCALATE",
+            trigger=hard.trigger,
+            reason=hard.reason,
+            confidence=1.0,
+            tier=0,
+            latency_ms=wall(),
+            tier1_latency_ms=0,
+            tier2_latency_ms=None,
+            provider_label=_label(),
+            degraded=False,
+            notes=notes,
+        )
 
     t1 = await chat(
         "TIER1",
@@ -108,29 +133,6 @@ async def classify(utterance: str, *, use_tier2: bool = True) -> PolicyVerdict:
         temperature=0,
         max_tokens=_max_tokens("TIER1"),
     )
-
-    def wall() -> int:
-        return int((time.perf_counter() - started) * 1000)
-
-    if hard is not None:
-        if t1.ok and t1.parsed and t1.parsed.get("verdict") == "ALLOW":
-            notes.append("hard net overrode model ALLOW")
-        elif not t1.ok:
-            notes.append(f"tier1 failed: {t1.error}")
-        notes.append(hard.reason)
-        return PolicyVerdict(
-            verdict="ESCALATE",
-            trigger=hard.trigger,
-            reason=hard.reason,
-            confidence=1.0,
-            tier=0,
-            latency_ms=wall(),
-            tier1_latency_ms=t1.latency_ms,
-            tier2_latency_ms=None,
-            provider_label=t1.provider_label or "hard-net",
-            degraded=False,
-            notes=notes,
-        )
 
     if not t1.ok:
         return _degraded(

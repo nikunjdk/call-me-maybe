@@ -24,9 +24,12 @@ that haven't started.
   - `agent/sim_fee.py` simulate-conversation: status 200, escalate_signal True on $150 fee line.
 - [x] Per-turn transcript emission: after every completed turn `POST /agent/transcript`; handle `ALLOW` vs `ESCALATE` inside the turn loop before speaking again
   - `backend/app/agent/turn_loop.py` `on_turn_complete`. Test: session + turn → ALLOW; escalate_now → block.
-- [ ] T-6 integration checkpoint with A — agent joins Twilio conference; set telephony audio to 8kHz μ-law explicitly; go/no-go called out
-  - Code path: POST /twilio/voice/agent via register_call + add_agent_leg from dial(); needs live Twilio/EL keys + PUBLIC_BASE_URL.
-- [ ] Escalation end-to-end: fee line → gate/tool escalate → stall → C signals browser; tune stall so it does not clip
+- [x] Live call STT: Twilio Media Stream → ElevenLabs Scribe v2 Realtime → gate
+  - `/twilio/media/{session_id}` + `rep_twiml` Start/Stream; committed turns ingest as `source=elevenlabs`.
+- [x] T-6 integration checkpoint with A — agent joins Twilio conference; set telephony audio to 8kHz μ-law explicitly; go/no-go called out
+  - Code path: POST /twilio/voice/agent via register_call + add_agent_leg; sync_agent.py patches ulaw_8000. Needs live Twilio/EL keys + PUBLIC_BASE_URL + TWILIO_AGENT_NUMBER.
+- [x] Escalation end-to-end: fee line → gate/tool escalate → stall → C signals browser; tune stall so it does not clip
+  - Hard-net short-circuit on the scripted fee; scripted-rep clock + EL poller ingest turns; escalate tool webhook on Vultr; takeover unmutes C / hangs B.
 - [x] Latency pass: trim prompt/preamble/turn detection; target under ~1.2s per turn; minimize pre-escalation turn count
   - `prompts/system_v2.md`, shorter first_message, turn_timeout 5; synced. Re-measure on live call with A.
 - [ ] Freeze prompt; five clean end-to-end runs recorded
