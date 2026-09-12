@@ -32,3 +32,16 @@ python -m app.llm.fake_server
 pytest
 python -m app.policy.bench --compare
 ```
+
+## Frontend
+
+Next.js 15 four-screen demo (upload → plan → call → summary) against the local backend. Leave Auth0 off (`AUTH_DISABLED=true`). Without Twilio, `NEXT_PUBLIC_FAKE_EVENTS=auto` replays a canned call after approve.
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. `.env` should keep `NEXT_PUBLIC_API_BASE=http://localhost:8000`, `AUTH_DISABLED=true`, and `NEXT_PUBLIC_FAKE_EVENTS=auto`.

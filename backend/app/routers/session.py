@@ -1,7 +1,5 @@
 import logging
-import os
 
-import httpx
 from fastapi import APIRouter, HTTPException, UploadFile
 
 from app.events import emit_event, emit_state
@@ -29,6 +27,7 @@ from app.store import (
     set_timestamps,
 )
 from app.summarize import generate_summary
+from app.telephony.router import dial as start_dial
 
 logger = logging.getLogger(__name__)
 
@@ -74,19 +73,22 @@ async def post_plan(session_id: str, body: PlanRequest | None = None) -> Plan:
 @router.post("/{session_id}/approve", response_model=ApproveResponse)
 async def post_approve(session_id: str) -> ApproveResponse:
     session = approve(session_id)
-    dial = os.environ.get("DIAL_WEBHOOK_URL", "").strip()
-    if dial:
-        try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                await client.post(
-                    dial,
-                    json={"session_id": session_id, "plan": session.plan.model_dump() if session.plan else None},
-                )
-        except Exception:
-            logger.warning("A /dial webhook failed session_id=%s", session_id, exc_info=True)
-    else:
-        logger.info("A /dial goes here session_id=%s (DIAL_WEBHOOK_URL unset)", session_id)
     await emit_state(session_id, session.state)
+    try:
+        await start_dial(session_id)
+    except HTTPException as exc:
+        if exc.status_code == 503:
+            logger.info("A /dial skipped (Twilio unset) session_id=%s", session_id)
+        else:
+            logger.warning(
+                "A /dial HTTP %s session_id=%s",
+                exc.status_code,
+                session_id,
+                exc_info=True,
+            )
+    except Exception:
+        logger.warning("A /dial failed session_id=%s", session_id, exc_info=True)
+    session = get_session(session_id)
     return ApproveResponse(session_id=session_id, state=session.state)
 
 

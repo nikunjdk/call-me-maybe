@@ -7,7 +7,7 @@ from fastapi.responses import Response
 
 from app.events import emit_event, emit_state
 from app.models import SessionState
-from app.store import get_session, get_session_or_none, set_state
+from app.store import get_session, get_session_or_none, set_state, set_timestamps
 from app.telephony.config import load_config
 from app.telephony.runtime import (
     get_active,
@@ -66,6 +66,18 @@ def resolve_session_id(form: dict, query_session_id: str | None) -> str | None:
     if active:
         return active.session_id
     return None
+
+
+def _persist_timestamps(session_id: str, runtime) -> None:
+    if runtime is None:
+        return
+    data = runtime.timestamp_data()
+    set_timestamps(
+        session_id,
+        call_started_ts=data.get("call_started_ts"),
+        human_unmuted_ts=data.get("leg_c_unmuted_ts"),
+        call_ended_ts=data.get("call_ended_ts"),
+    )
 
 
 def _is_rep_live(event: str, label: str) -> bool:
@@ -175,6 +187,7 @@ async def takeover(session_id: str) -> dict:
     hangup_agent(client, runtime)
 
     unmuted_ts = runtime.mark_unmuted()
+    _persist_timestamps(session_id, runtime)
     session = set_state(session_id, SessionState.HUMAN_CONTROL)
     await emit_event(
         session_id,
@@ -249,6 +262,7 @@ async def twilio_status(request: Request, session_id: str | None = None) -> dict
     if session.state == SessionState.DIALING and _is_rep_live(event, label):
         if runtime is not None:
             runtime.mark_in_call()
+            _persist_timestamps(resolved, runtime)
         session = set_state(resolved, SessionState.IN_CALL)
         await emit_state(resolved, session.state)
         return {"ok": True}
@@ -256,6 +270,7 @@ async def twilio_status(request: Request, session_id: str | None = None) -> dict
     if event in {"conference-end", "end"}:
         if runtime is not None:
             runtime.mark_ended()
+            _persist_timestamps(resolved, runtime)
             data = {"state": SessionState.ENDED.value, **runtime.timestamp_data()}
         else:
             data = {"state": SessionState.ENDED.value}
