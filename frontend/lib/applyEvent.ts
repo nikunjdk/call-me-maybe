@@ -88,10 +88,9 @@ export function applyEvent<T extends { state: SessionState | null; turns: Turn[]
 }
 
 export function isLiveCallSignal(event: EventEnvelope): boolean {
-  if (event.type === "transcript_turn") return true;
-  if (event.type !== "state_changed") return false;
-  const state = asState(event.data.state);
-  return state === "DIALING" || state === "IN_CALL";
+  // Only real transcript turns cancel the demo tape. DIALING/IN_CALL from
+  // Twilio must not hide the on-screen conversation during a live ring.
+  return event.type === "transcript_turn";
 }
 
 export function turnsFromSession(session: Session): Turn[] {

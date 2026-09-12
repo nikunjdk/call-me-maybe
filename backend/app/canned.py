@@ -16,7 +16,7 @@ CANNED_EXTRACTED = Extracted(
 CANNED_PLAN = Plan(
     goal="Cancel this flight and request a refund to the original form of payment.",
     target_name="United Airlines Reservations",
-    target_number="+1-800-864-8331",
+    target_number="+14123705109",
     opening_script=(
         "Hello, this is an AI assistant calling on behalf of Alex Chen. "
         "I have their booking reference ABC123 for United flight UA 482 on "

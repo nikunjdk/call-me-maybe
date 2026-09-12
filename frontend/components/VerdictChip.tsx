@@ -13,16 +13,18 @@ export function VerdictChip({ verdict }: { verdict: PolicyVerdict }) {
   parts.push(verdict.provider_label);
   parts.push(`${verdict.latency_ms}ms`);
 
-  const color = verdict.degraded
-    ? "text-degraded"
+  const tone = verdict.degraded
+    ? "border-degraded/30 bg-amber-50 text-degraded"
     : verdict.tier === 0
-      ? "text-ink"
+      ? "border-line bg-white/80 text-ink"
       : escalate
-        ? "text-escalate"
-        : "text-allow";
+        ? "border-escalate/30 bg-rose-50 text-escalate"
+        : "border-allow/30 bg-teal-50 text-allow";
 
   return (
-    <span className={`mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] tracking-wide ${color}`}>
+    <span
+      className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-sm tracking-wide ${tone}`}
+    >
       {verdict.degraded ? (
         <span
           aria-label="degraded — fail closed"

@@ -1,8 +1,11 @@
-"""Gemini booking extraction. Falls back to canned on failure (T-4 ladder)."""
+"""Grok booking extraction (PDF text via pypdf). Falls back to canned on failure."""
 
 from __future__ import annotations
 
+import io
 import logging
+
+from pypdf import PdfReader
 
 from app.canned import CANNED_EXTRACTED
 from app.llm.provider import generate_content, parse_json_object
@@ -28,10 +31,25 @@ _IMAGE_TYPES = {
 }
 
 
+def _pdf_text(raw: bytes) -> str:
+    """Pull plain text from a PDF. Empty string on failure or image-only pages."""
+    try:
+        reader = PdfReader(io.BytesIO(raw))
+        parts: list[str] = []
+        for page in reader.pages:
+            chunk = page.extract_text() or ""
+            if chunk.strip():
+                parts.append(chunk)
+        return "\n".join(parts).strip()
+    except Exception as exc:
+        logger.info("pdf text extract failed: %s", exc)
+        return ""
+
+
 def sniff_upload(
     raw: bytes, filename: str | None, content_type: str | None
 ) -> tuple[str, bytes | None, str | None]:
-    """Return (text, file_bytes, mime). Binary tickets keep bytes for Gemini."""
+    """Return (text, file_bytes, mime). PDFs become text when extractable."""
     mime = (content_type or "").split(";")[0].strip().lower()
     if mime == "image/jpg":
         mime = "image/jpeg"
@@ -51,12 +69,20 @@ def sniff_upload(
             mime = "image/heic"
         else:
             mime = "text/plain"
-    if mime == "application/pdf" or mime in _IMAGE_TYPES:
+    if mime == "application/pdf":
+        text = _pdf_text(raw)
+        if text:
+            return text, None, None
+        return "", raw, mime
+    if mime in _IMAGE_TYPES:
         return "", raw, mime
     try:
         return raw.decode("utf-8"), None, None
     except UnicodeDecodeError:
         if raw.startswith(b"%PDF"):
+            text = _pdf_text(raw)
+            if text:
+                return text, None, None
             return "", raw, "application/pdf"
         return raw[:4000].decode("latin-1", errors="replace"), None, None
 

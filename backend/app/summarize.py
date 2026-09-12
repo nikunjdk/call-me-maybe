@@ -1,4 +1,4 @@
-"""Gemini post-call summary + attention metric from A's timestamps."""
+"""Grok post-call summary + attention metric from A's timestamps."""
 
 from __future__ import annotations
 

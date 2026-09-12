@@ -2,7 +2,7 @@
 
 IFM, vLLM, llama.cpp, and xAI all speak POST /v1/chat/completions.
 Roles are env prefixes: TIER1_, TIER2_, PLANNER_, EXTRACTOR_.
-Gemini file/PDF extraction uses the native generateContent path.
+Optional Gemini generateContent path remains if EXTRACTOR_BASE_URL points at Google.
 """
 
 from __future__ import annotations
