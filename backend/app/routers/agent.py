@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from app.canned import CANNED_ALLOW, canned_escalate
+from app.canned import canned_escalate
 from app.events import emit_event, emit_state
 from app.models import EscalateRequest, PolicyVerdict, TranscriptRequest
+from app.policy.gate import classify
 from app.store import agent_turns_blocked, append_verdict, escalate, get_session
 
 router = APIRouter(prefix="/agent", tags=["agent"])
@@ -21,7 +22,21 @@ async def post_transcript(body: TranscriptRequest) -> PolicyVerdict:
         "transcript_turn",
         {"speaker": body.speaker, "text": body.text},
     )
-    verdict = CANNED_ALLOW.model_copy()
+    verdict = await classify(body.text)
+    if verdict.verdict == "ESCALATE":
+        session = escalate(body.session_id, verdict)
+        await emit_event(
+            body.session_id,
+            "policy_verdict",
+            verdict.model_dump(),
+        )
+        await emit_event(
+            body.session_id,
+            "escalation",
+            {"reason": verdict.reason, "verdict": verdict.model_dump()},
+        )
+        await emit_state(body.session_id, session.state)
+        return verdict
     append_verdict(body.session_id, verdict)
     await emit_event(body.session_id, "policy_verdict", verdict.model_dump())
     return verdict

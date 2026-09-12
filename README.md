@@ -6,7 +6,7 @@ Shared API contract: [`docs/contract.md`](docs/contract.md).
 
 ## Backend (Member C)
 
-Python 3.11, FastAPI. Hour-one skeleton returns canned data so A, B, and D can build against a live server.
+Python 3.11, FastAPI. Session stubs return canned booking/plan data. Transcript turns run the two-tier policy gate (fail closed).
 
 ```bash
 cd backend
@@ -18,3 +18,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Run from `backend/` so `app` imports resolve. OpenAPI: http://localhost:8000/docs
+
+Point `TIER1_*` at the IFM hosted API (see `.env.example`). Swap to self-hosted vLLM/llama.cpp by uncommenting the three lines under the IFM block. Without keys, the gate fail-closes to `ESCALATE`.
+
+Local failure-test server:
+
+```bash
+cd backend
+python -m app.llm.fake_server
+pytest
+```
