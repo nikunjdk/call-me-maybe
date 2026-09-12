@@ -6,7 +6,7 @@ import json
 import logging
 
 from app.canned import CANNED_SUMMARY
-from app.llm.provider import chat, parse_json_object
+from app.llm.provider import generate_content, parse_json_object
 from app.models import Session, Summary
 
 logger = logging.getLogger(__name__)
@@ -32,24 +32,19 @@ def attention_seconds(session: Session) -> tuple[int, int]:
 
 async def generate_summary(session: Session) -> Summary:
     total, human = attention_seconds(session)
-    result = await chat(
+    result = await generate_content(
         "EXTRACTOR",
-        [
-            {"role": "system", "content": _SYSTEM},
+        system=_SYSTEM,
+        user=json.dumps(
             {
-                "role": "user",
-                "content": json.dumps(
-                    {
-                        "goal": session.plan.goal if session.plan else None,
-                        "extracted": session.extracted.model_dump() if session.extracted else None,
-                        "transcripts": session.transcripts[-40:],
-                        "escalated": any(v.verdict == "ESCALATE" for v in session.verdicts),
-                    }
-                ),
-            },
-        ],
+                "goal": session.plan.goal if session.plan else None,
+                "extracted": session.extracted.model_dump() if session.extracted else None,
+                "transcripts": session.transcripts[-40:],
+                "escalated": any(v.verdict == "ESCALATE" for v in session.verdicts),
+            }
+        ),
         temperature=0,
-        max_tokens=500,
+        max_tokens=1024,
     )
     parsed = result.parsed or parse_json_object(result.text)
     if not parsed:

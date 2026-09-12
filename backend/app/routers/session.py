@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile
 
 from app.events import emit_event, emit_state
-from app.extract import extract_booking
+from app.extract import extract_booking, sniff_upload
 from app.models import (
     ApproveResponse,
     Extracted,
@@ -44,11 +44,10 @@ async def post_session() -> SessionCreateResponse:
 @router.post("/{session_id}/document", response_model=Extracted)
 async def post_document(session_id: str, file: UploadFile) -> Extracted:
     raw = await file.read()
-    try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        text = raw[:4000].decode("latin-1", errors="replace")
-    extracted, fallback = await extract_booking(text)
+    text, file_bytes, mime_type = sniff_upload(raw, file.filename, file.content_type)
+    extracted, fallback = await extract_booking(
+        text, file_bytes=file_bytes, mime_type=mime_type
+    )
     if fallback:
         logger.info("document extract used canned fallback session_id=%s", session_id)
     session = set_extracted(session_id, extracted)

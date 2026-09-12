@@ -27,9 +27,14 @@ async def connect() -> None:
         return
     from motor.motor_asyncio import AsyncIOMotorClient
 
-    _client = AsyncIOMotorClient(uri)
+    _client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
     _db = _client[os.environ.get("MONGODB_DB", "callmemaybe")]
-    await _db.command("ping")
+    try:
+        await _db.command("ping")
+    except Exception as exc:
+        logger.warning("mongo ping failed — in-memory only (%s)", exc)
+        await close()
+        return
     logger.info("mongo write-through connected db=%s", _db.name)
 
 

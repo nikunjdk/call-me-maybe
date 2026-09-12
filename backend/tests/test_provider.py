@@ -37,7 +37,8 @@ async def test_chat_http_503(fake_llm) -> None:
     set_mode(fake_llm["origin"], "503")
     result = await chat("TIER1", [{"role": "user", "content": BENIGN}])
     assert result.ok is False
-    assert result.error == "http 503"
+    assert result.error is not None
+    assert result.error.startswith("http 503")
     assert result.provider_label == "K2-0.9B · fake"
 
 
