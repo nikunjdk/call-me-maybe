@@ -1,4 +1,7 @@
+import os
+
 from app.models import Extracted, Plan, PolicyVerdict, Summary
+from app.policy.hard_net import hard_check
 
 CANNED_EXTRACTED = Extracted(
     passenger_name="Alex Chen",
