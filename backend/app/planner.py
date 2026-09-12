@@ -53,7 +53,7 @@ async def generate_plan(extracted: Extracted, goal: str) -> tuple[Plan, bool]:
     parsed = result.parsed or parse_json_object(result.text)
     if not parsed:
         logger.info("planner fallback canned ok=%s error=%s", result.ok, result.error)
-        return _stamp_dest(canned_plan(goal)), True
+        return _stamp_dest(canned_plan(goal, extracted)), True
     try:
         plan = Plan(
             goal=str(parsed.get("goal") or goal),
@@ -65,7 +65,7 @@ async def generate_plan(extracted: Extracted, goal: str) -> tuple[Plan, bool]:
             estimated_duration=str(parsed.get("estimated_duration") or ""),
         )
     except Exception:
-        return _stamp_dest(canned_plan(goal)), True
+        return _stamp_dest(canned_plan(goal, extracted)), True
     if not plan.opening_script or not plan.target_name:
-        return _stamp_dest(canned_plan(goal)), True
+        return _stamp_dest(canned_plan(goal, extracted)), True
     return _stamp_dest(plan), False

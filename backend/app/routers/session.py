@@ -49,8 +49,11 @@ async def post_document(session_id: str, file: UploadFile) -> Extracted:
     extracted, fallback = await extract_booking(
         text, file_bytes=file_bytes, mime_type=mime_type
     )
+    if extracted is None:
+        logger.info("document extract failed session_id=%s", session_id)
+        raise HTTPException(status_code=502, detail="could not read this booking")
     if fallback:
-        logger.info("document extract used canned fallback session_id=%s", session_id)
+        logger.info("document extract used local ticket parse session_id=%s", session_id)
     session = set_extracted(session_id, extracted)
     await emit_state(session_id, session.state)
     return session.extracted

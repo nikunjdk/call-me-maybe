@@ -56,10 +56,28 @@ CANNED_ALLOW = PolicyVerdict(
 )
 
 
-def canned_plan(goal: str) -> Plan:
-    if not goal.strip():
+def canned_plan(goal: str, extracted: Extracted | None = None) -> Plan:
+    updates: dict = {}
+    if goal.strip():
+        updates["goal"] = goal.strip()
+    if extracted is not None:
+        name = extracted.passenger_name or "the passenger"
+        pnr = extracted.pnr or "the booking"
+        flight = " ".join(
+            part for part in (extracted.airline, extracted.flight_number) if part
+        ).strip()
+        flight_bit = f" for {flight}" if flight else ""
+        date_bit = f" on {extracted.date}" if extracted.date else ""
+        updates["opening_script"] = (
+            f"Hello, this is an AI assistant calling on behalf of {name}. "
+            f"I have their booking reference {pnr}{flight_bit}{date_bit}. "
+            "They would like to cancel this reservation."
+        )
+        if extracted.airline:
+            updates["target_name"] = f"{extracted.airline} Reservations"
+    if not updates:
         return CANNED_PLAN
-    return CANNED_PLAN.model_copy(update={"goal": goal})
+    return CANNED_PLAN.model_copy(update=updates)
 
 
 def canned_escalate(reason: str) -> PolicyVerdict:

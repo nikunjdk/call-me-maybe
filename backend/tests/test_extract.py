@@ -1,5 +1,7 @@
-from app.extract import extract_booking, sniff_upload
+from app.canned import CANNED_EXTRACTED, canned_plan
+from app.extract import extract_booking, from_ticket_text, sniff_upload
 from app.llm.provider import reset_providers
+from app.models import Extracted
 
 
 def _pdf_with_text(payload: str) -> bytes:
@@ -70,10 +72,70 @@ def test_sniff_decodes_plain_text() -> None:
     assert mime is None
 
 
-async def test_extract_falls_back_when_extractor_unconfigured(monkeypatch) -> None:
+async def test_extract_uses_local_parse_when_extractor_unconfigured(monkeypatch) -> None:
     await reset_providers()
     monkeypatch.delenv("EXTRACTOR_BASE_URL", raising=False)
     monkeypatch.delenv("EXTRACTOR_MODEL", raising=False)
-    extracted, fallback = await extract_booking("Passenger: Alex Chen PNR ABC123")
+    extracted, fallback = await extract_booking("Passenger: Priya Shah PNR ZX9QWE")
     assert fallback is True
-    assert extracted.pnr == "ABC123"
+    assert extracted is not None
+    assert extracted.pnr == "ZX9QWE"
+    assert extracted.passenger_name == "Priya Shah"
+    assert extracted.pnr != CANNED_EXTRACTED.pnr
+
+
+def test_from_ticket_text_reads_amadeus_itinerary() -> None:
+    text = """
+TRAVEL SUMMARY
+SMITH/JANE MS
+DATE DEP TIME FROM TO FLIGHT NO TERMINAL AIRLINE NAME
+17AUG 1905 DELHI DEL TOKYO HND JL030 3 JAPAN AIRLINES
+BOOKING REF: 8H2FED
+DATE: 14 AUGUST 2026
+SMITH/JANE MS
+FLIGHT JL 030 - JAPAN AIRLINES MON 17 AUGUST 2026
+DEPARTURE: DELHI, DL (INDIRA GANDHI INTL), TERMINAL 3 17 AUG 19:05
+ARRIVAL: TOKYO, JP (TOKYO INTL HANEDA), TERMINAL 3 18 AUG 06:45
+FLIGHT BOOKING REF: JL/8H2FED
+RESERVATION CONFIRMED, ECONOMY (M)
+DEPARTURE: TOKYO, JP
+ARRIVAL: NEW YORK, NY (JOHN F KENNEDY INTL)
+DEPARTURE: NEW YORK, NY
+ARRIVAL: PITTSBURGH, PA (INTERNATIONAL)
+"""
+    extracted = from_ticket_text(text)
+    assert extracted is not None
+    assert extracted.pnr == "8H2FED"
+    assert extracted.passenger_name == "Jane Smith"
+    assert extracted.airline == "Japan Airlines"
+    assert extracted.flight_number == "JL 030"
+    assert extracted.date == "2026-08-17"
+    assert extracted.ticket_class == "Economy"
+    assert extracted.route.startswith("Delhi")
+    assert "Pittsburgh" in extracted.route
+
+
+def test_canned_plan_uses_extracted_passenger() -> None:
+    extracted = Extracted(
+        passenger_name="Jane Smith",
+        pnr="8H2FED",
+        airline="Japan Airlines",
+        flight_number="JL 030",
+        date="2026-08-17",
+        route="Delhi → Pittsburgh",
+        ticket_class="Economy",
+    )
+    plan = canned_plan("cancel this flight", extracted)
+    assert "Jane Smith" in plan.opening_script
+    assert "8H2FED" in plan.opening_script
+    assert "Alex Chen" not in plan.opening_script
+    assert plan.target_name == "Japan Airlines Reservations"
+
+
+async def test_extract_returns_none_when_empty_and_unconfigured(monkeypatch) -> None:
+    await reset_providers()
+    monkeypatch.delenv("EXTRACTOR_BASE_URL", raising=False)
+    monkeypatch.delenv("EXTRACTOR_MODEL", raising=False)
+    extracted, fallback = await extract_booking("")
+    assert fallback is True
+    assert extracted is None

@@ -7,11 +7,11 @@ function ExtractedChips({ extracted }: { extracted: Extracted }) {
   const items = [
     extracted.passenger_name,
     extracted.pnr,
-    `${extracted.airline} ${extracted.flight_number}`,
+    `${extracted.airline} ${extracted.flight_number}`.trim(),
     extracted.route,
     extracted.date,
     extracted.ticket_class,
-  ];
+  ].filter(Boolean);
   return (
     <ul className="mt-3 flex flex-wrap gap-2">
       {items.map((item) => (
