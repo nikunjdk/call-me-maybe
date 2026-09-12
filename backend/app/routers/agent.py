@@ -105,6 +105,11 @@ async def post_transcript(body: TranscriptRequest) -> PolicyVerdict:
 @router.post("/tool/escalate", response_model=PolicyVerdict)
 async def post_escalate(body: EscalateRequest) -> PolicyVerdict:
     session = get_session(body.session_id)
+    if agent_turns_blocked(session):
+        raise HTTPException(
+            status_code=409,
+            detail="no further agent turns after ESCALATE",
+        )
     verdict = canned_escalate(body.reason)
     session = escalate(body.session_id, verdict)
     await emit_event(body.session_id, "escalation", {"reason": body.reason, "verdict": verdict.model_dump()})

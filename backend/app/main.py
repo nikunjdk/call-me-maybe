@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db import close as close_db
 from app.db import connect as connect_db
 from app.envload import load_app_env
+from app.store import hydrate
 from app.events import router as events_router
 from app.routers.agent import router as agent_router
 from app.routers.session import router as session_router
@@ -27,6 +28,8 @@ async def lifespan(_app: FastAPI):
         "set" if key_set else "MISSING",
     )
     await connect_db()
+    loaded = await hydrate()
+    logging.getLogger(__name__).info("store hydrated sessions=%s", loaded)
     yield
     await close_db()
 

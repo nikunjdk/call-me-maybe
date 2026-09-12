@@ -2,7 +2,11 @@
 
 AI agent that makes the phone calls you've been putting off, and hands you the phone only when a human decision is required.
 
-Shared API contract: [`docs/contract.md`](docs/contract.md).
+**Production (Vultr + TLS):** https://207.148.20.54.sslip.io
+
+Shared API contract: [`docs/contract.md`](docs/contract.md). Live demo runbook: [`docs/demo-script.md`](docs/demo-script.md).
+
+**Gate (eval, n=40):** accuracy **0.975**, **0 false allows**, 1 false escalate, tier-2 rate **0.00**, p50 **267ms**, p95 **1758ms**. Live model `IFM/K2-Horizon-375B-A23B`. Numbers from [`policy/bench_results.md`](policy/bench_results.md) — do not quote others.
 
 ## Backend (Member C)
 
@@ -37,8 +41,10 @@ Next.js 15 four-screen demo (upload → plan → call → summary) against the l
 
 **Live vs fake**
 
-- **Fake (default):** Without Twilio credentials, approve still advances and `NEXT_PUBLIC_FAKE_EVENTS=auto` replays a canned call after approve.
-- **Live:** Fill Twilio + ElevenLabs in `backend/.env`, tunnel `PUBLIC_BASE_URL` / `AGENT_WEBHOOK_BASE_URL`, set `NEXT_PUBLIC_FAKE_EVENTS=0`, then follow [`docs/demo-script.md`](docs/demo-script.md).
+- **Fake (default locally):** Without Twilio credentials, approve still advances and `NEXT_PUBLIC_FAKE_EVENTS=auto` replays a canned call after approve.
+- **Live / Vultr:** `PUBLIC_BASE_URL` and `AGENT_WEBHOOK_BASE_URL` are `https://207.148.20.54.sslip.io`. Production frontend uses `NEXT_PUBLIC_FAKE_EVENTS=0`. Follow [`docs/demo-script.md`](docs/demo-script.md).
+
+Seeded demo start (plan, waiting on Approve): https://207.148.20.54.sslip.io/session/demo-alex-chen/plan
 
 ```bash
 cd frontend

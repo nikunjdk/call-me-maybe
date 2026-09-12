@@ -2,7 +2,8 @@ from uuid import uuid4
 
 from fastapi import HTTPException
 
-from app.db import persist_session_nowait
+from app.canned import CANNED_EXTRACTED, CANNED_PLAN
+from app.db import load_sessions, persist_session_nowait
 from app.models import (
     Extracted,
     Plan,
@@ -11,6 +12,8 @@ from app.models import (
     SessionState,
     Summary,
 )
+
+DEMO_SESSION_ID = "demo-alex-chen"
 
 _TERMINAL_AGENT = {
     SessionState.ESCALATING,
@@ -33,6 +36,35 @@ _sessions: dict[str, Session] = {}
 
 def _flush(session: Session) -> None:
     persist_session_nowait(session)
+
+
+def seed_demo() -> Session:
+    """Known demo start: Alex Chen / UA 482 cancel, waiting on Approve."""
+    session = Session(
+        session_id=DEMO_SESSION_ID,
+        state=SessionState.PLAN_PENDING,
+        extracted=CANNED_EXTRACTED,
+        plan=CANNED_PLAN,
+        verdicts=[],
+        transcripts=[],
+        summary=None,
+        call_started_ts=None,
+        human_unmuted_ts=None,
+        call_ended_ts=None,
+    )
+    _sessions[DEMO_SESSION_ID] = session
+    _flush(session)
+    return session
+
+
+async def hydrate() -> int:
+    for session in await load_sessions():
+        if session.session_id == DEMO_SESSION_ID:
+            continue
+        if session.session_id not in _sessions:
+            _sessions[session.session_id] = session
+    seed_demo()
+    return len(_sessions)
 
 
 def create_session() -> Session:

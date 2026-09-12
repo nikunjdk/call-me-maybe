@@ -4,12 +4,29 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 
 from app.canned import canned_plan
 from app.llm.provider import chat, parse_json_object
 from app.models import Extracted, Plan
 
 logger = logging.getLogger(__name__)
+
+
+def _demo_dest() -> str:
+    """Hack-demo override so Approve rings the verified phone, not 1-800."""
+    return (
+        os.getenv("TWILIO_SIM_REP_NUMBER", "").strip()
+        or os.getenv("TWILIO_LIVE_REP_NUMBER", "").strip()
+    )
+
+
+def _stamp_dest(plan: Plan) -> Plan:
+    dest = _demo_dest()
+    if dest:
+        return plan.model_copy(update={"target_number": dest})
+    return plan
+
 
 _SYSTEM = (
     "Write a phone-call plan for an AI agent that will cancel or change a booking. "
@@ -36,7 +53,7 @@ async def generate_plan(extracted: Extracted, goal: str) -> tuple[Plan, bool]:
     parsed = result.parsed or parse_json_object(result.text)
     if not parsed:
         logger.info("planner fallback canned ok=%s error=%s", result.ok, result.error)
-        return canned_plan(goal), True
+        return _stamp_dest(canned_plan(goal)), True
     try:
         plan = Plan(
             goal=str(parsed.get("goal") or goal),
@@ -48,7 +65,7 @@ async def generate_plan(extracted: Extracted, goal: str) -> tuple[Plan, bool]:
             estimated_duration=str(parsed.get("estimated_duration") or ""),
         )
     except Exception:
-        return canned_plan(goal), True
+        return _stamp_dest(canned_plan(goal)), True
     if not plan.opening_script or not plan.target_name:
-        return canned_plan(goal), True
-    return plan, False
+        return _stamp_dest(canned_plan(goal)), True
+    return _stamp_dest(plan), False

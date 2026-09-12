@@ -45,6 +45,29 @@ async def close() -> None:
     _client, _db = None, None
 
 
+def _session_from_doc(doc: dict) -> Session | None:
+    payload = dict(doc)
+    payload.pop("_id", None)
+    try:
+        return Session.model_validate(payload)
+    except Exception as exc:
+        logger.warning("skip bad session doc %s (%s)", payload.get("session_id"), exc)
+        return None
+
+
+async def load_sessions(limit: int = 50) -> list[Session]:
+    if _db is None:
+        return []
+    cursor = _db.sessions.find().sort("_id", -1).limit(limit)
+    docs = await cursor.to_list(limit)
+    sessions: list[Session] = []
+    for doc in docs:
+        session = _session_from_doc(doc)
+        if session is not None:
+            sessions.append(session)
+    return sessions
+
+
 async def persist_session(session: Session) -> None:
     if _db is None:
         return

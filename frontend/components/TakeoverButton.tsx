@@ -11,7 +11,7 @@ export function TakeoverButton({
 }) {
   if (live) {
     return (
-      <p className="rounded-sm border border-ink bg-ink px-6 py-4 text-center text-sm tracking-wide text-paper">
+      <p className="rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-center text-lg font-bold tracking-wide text-white shadow-lg">
         You&apos;re live — the rep is already briefed.
       </p>
     );
@@ -24,7 +24,7 @@ export function TakeoverButton({
       type="button"
       onClick={onTakeover}
       disabled={busy}
-      className="w-full rounded-sm bg-escalate px-6 py-4 text-center text-base font-medium tracking-wide text-paper disabled:opacity-60"
+      className="btn btn-danger w-full shadow-lg"
     >
       Take over the call
     </button>
