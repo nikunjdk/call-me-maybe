@@ -20,55 +20,50 @@ export function PlanCard({
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-          Call plan
-        </p>
-        <h1 className="mt-2 font-display text-4xl leading-tight text-ink">
-          We will not act until you approve.
+        <p className="kicker">Call plan</p>
+        <h1 className="mt-3 font-display text-5xl leading-[0.95] tracking-tight text-ink lg:text-6xl">
+          We won&apos;t call until you say so.
         </h1>
       </div>
 
-      <div className="space-y-6 rounded-sm border border-line bg-paper px-6 py-6">
+      <div className="card space-y-6 px-7 py-8">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-            Who we&apos;ll call
-          </p>
-          <p className="mt-1 text-lg text-fg">{plan.target_name}</p>
-          <p className="text-sm text-muted">{plan.target_number}</p>
-          <p className="mt-1 text-sm text-muted">
+          <p className="kicker">Who we&apos;ll call</p>
+          <p className="mt-2 text-2xl font-semibold text-fg">{plan.target_name}</p>
+          <p className="text-lg text-muted">{plan.target_number}</p>
+          <p className="mt-1 text-lg text-muted">
             About {plan.estimated_duration}
           </p>
         </div>
 
         <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-            Opening script
-          </p>
-          <p className="mt-2 font-display text-xl leading-snug text-ink">
+          <p className="kicker">Opening script</p>
+          <p className="mt-2 font-display text-2xl leading-snug text-ink">
             {plan.opening_script}
           </p>
         </div>
 
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-            Permitted actions
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg">
-            {plan.permitted_actions.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-escalate">
-            Escalation triggers
-          </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg">
-            {plan.escalation_triggers.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="rounded-2xl border border-allow/25 bg-gradient-to-br from-sky-50 to-teal-50 px-5 py-5">
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-allow">
+              Permitted actions
+            </p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-lg text-fg">
+              {plan.permitted_actions.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-escalate/20 bg-gradient-to-br from-rose-50 to-slate-50 px-5 py-5">
+            <p className="text-sm font-bold uppercase tracking-[0.16em] text-escalate">
+              Escalation triggers
+            </p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-lg text-fg">
+              {plan.escalation_triggers.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -81,20 +76,18 @@ export function PlanCard({
             if (ok) setEditing(false);
           }}
         >
-          <label className="block text-[11px] uppercase tracking-[0.18em] text-muted">
-            Revise the goal
-          </label>
+          <label className="kicker block">Revise the goal</label>
           <textarea
             value={goal}
             onChange={(event) => setGoal(event.target.value)}
             rows={3}
-            className="w-full rounded-sm border border-line bg-paper px-4 py-3 text-base text-fg outline-none focus:border-ink"
+            className="field"
           />
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="submit"
               disabled={busy || !goal.trim()}
-              className="rounded-sm bg-ink px-5 py-2.5 text-sm tracking-wide text-paper disabled:opacity-60"
+              className="btn btn-primary w-full sm:w-auto"
             >
               Update plan
             </button>
@@ -104,19 +97,19 @@ export function PlanCard({
                 setGoal(plan.goal);
                 setEditing(false);
               }}
-              className="rounded-sm border border-line px-5 py-2.5 text-sm tracking-wide text-ink"
+              className="btn btn-secondary w-full sm:w-auto"
             >
               Cancel
             </button>
           </div>
         </form>
       ) : (
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <button
             type="button"
             onClick={onApprove}
             disabled={busy}
-            className="rounded-sm bg-ink px-6 py-2.5 text-sm tracking-wide text-paper disabled:opacity-60"
+            className="btn btn-primary w-full sm:w-auto"
           >
             Approve
           </button>
@@ -124,7 +117,7 @@ export function PlanCard({
             type="button"
             onClick={() => setEditing(true)}
             disabled={busy}
-            className="rounded-sm border border-line px-6 py-2.5 text-sm tracking-wide text-ink disabled:opacity-60"
+            className="btn btn-secondary w-full sm:w-auto"
           >
             Edit
           </button>

@@ -9,8 +9,10 @@ export function VerdictChip({ verdict }: { verdict: PolicyVerdict }) {
 
   return (
     <span
-      className={`mt-1 inline-block font-mono text-[11px] tracking-wide ${
-        escalate ? "text-escalate" : "text-allow"
+      className={`mt-2 inline-flex rounded-full border px-3 py-1 font-mono text-sm tracking-wide ${
+        escalate
+          ? "border-escalate/30 bg-rose-50 text-escalate"
+          : "border-allow/30 bg-teal-50 text-allow"
       }`}
     >
       {parts.join(" · ")}

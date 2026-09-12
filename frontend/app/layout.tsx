@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import { Newsreader, Source_Sans_3 } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Outfit, Source_Sans_3 } from "next/font/google";
 import { AppChrome } from "@/components/AppChrome";
 import "./globals.css";
 
-const newsreader = Newsreader({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-newsreader",
+  variable: "--font-outfit",
   display: "swap",
 });
 
@@ -21,6 +21,13 @@ export const metadata: Metadata = {
     "An AI agent that makes the phone calls you've been putting off, and hands you the phone only when a human decision is required.",
 };
 
+export const viewport: Viewport = {
+  themeColor: "#5a4d8c",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${newsreader.variable} ${sourceSans.variable} min-h-screen bg-canvas antialiased`}
+        className={`${outfit.variable} ${sourceSans.variable} min-h-dvh antialiased`}
       >
         <AppChrome>{children}</AppChrome>
       </body>
