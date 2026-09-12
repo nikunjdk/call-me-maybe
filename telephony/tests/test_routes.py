@@ -94,8 +94,10 @@ def test_dial_then_takeover_unmutes(
     config = MagicMock()
     config.dial_ready = True
     config.rest_ready = True
+    config.agent_leg_ready = False
     config.caller_number = "+15551111111"
     config.rep_number = "+15552222222"
+    config.agent_number = ""
     config.status_url.return_value = "https://example.test/twilio/status"
     load_config.return_value = config
 
@@ -107,10 +109,10 @@ def test_dial_then_takeover_unmutes(
     )
 
     session_id = _approve_session(client)
-    dial = client.post(f"/api/session/{session_id}/dial")
-    assert dial.status_code == 200
-    assert dial.json()["state"] == "DIALING"
-    assert dial.json()["conference"] == f"cmm-{session_id}"
+    # approve() already invokes dial when Twilio is configured
+    session = client.get(f"/api/session/{session_id}")
+    assert session.status_code == 200
+    assert session.json()["state"] == "DIALING"
 
     set_state(session_id, SessionState.IN_CALL)
     takeover = client.post(f"/api/session/{session_id}/takeover")

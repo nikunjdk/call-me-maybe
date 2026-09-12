@@ -31,12 +31,26 @@ def main() -> None:
     )
     base = (
         os.getenv("AGENT_WEBHOOK_BASE_URL")
+        or os.getenv("PUBLIC_BASE_URL")
         or os.getenv("BACKEND_PUBLIC_URL")
         or "http://127.0.0.1:8000"
     ).rstrip("/")
     tool_cfg["api_schema"]["url"] = tool_cfg["api_schema"]["url"].replace(
         "{{AGENT_WEBHOOK_BASE_URL}}", base
     )
+
+    placeholders = {
+        "session_id": "demo-session",
+        "opening_script": "Cancel the booking on the approved plan.",
+        "goal": "cancel this flight",
+        "passenger_name": "Alex Chen",
+        "pnr": "ABC123",
+        "airline": "United",
+        "flight_number": "UA 482",
+        "flight_date": "September 18",
+        "route": "SFO-EWR",
+        "ticket_class": "Economy",
+    }
 
     with httpx.Client(timeout=60.0, headers=headers) as client:
         tool_id = cfg.get("escalate_tool_id")
@@ -51,32 +65,38 @@ def main() -> None:
             tr.raise_for_status()
             tool_id = tr.json()["id"]
 
-        ur = client.patch(
-            f"{API}/convai/agents/{agent_id}",
-            json={
-                "conversation_config": {
-                    "tts": {
-                        "voice_id": cfg["voice_id"],
-                        "model_id": cfg["tts_model_id"],
+        patch_body = {
+            "conversation_config": {
+                "tts": {
+                    "voice_id": cfg["voice_id"],
+                    "model_id": cfg["tts_model_id"],
+                },
+                "agent": {
+                    "first_message": cfg["first_message"],
+                    "prompt": {"prompt": prompt, "tool_ids": [tool_id]},
+                    "dynamic_variables": {
+                        "dynamic_variable_placeholders": placeholders
                     },
-                    "agent": {
-                        "first_message": cfg["first_message"],
-                        "prompt": {"prompt": prompt, "tool_ids": [tool_id]},
-                    },
-                    "conversation": {
-                        "turn_timeout": cfg.get("turn_taking", {}).get("turn_timeout", 7),
-                    },
-                }
-            },
-        )
+                },
+                "conversation": {
+                    "turn_timeout": cfg.get("turn_taking", {}).get("turn_timeout", 7),
+                },
+            }
+        }
+        ur = client.patch(f"{API}/convai/agents/{agent_id}", json=patch_body)
         ur.raise_for_status()
 
     cfg["escalate_tool_id"] = tool_id
     cfg["webhook_base_url"] = base
+    cfg["transcript_webhook_path"] = "/agent/elevenlabs/event"
     (AGENT_DIR / "config" / "agent.json").write_text(
         json.dumps(cfg, indent=2) + "\n", encoding="utf-8"
     )
     print(f"ok agent={agent_id} tool={tool_id} webhook={base}")
+    print(
+        f"Configure ElevenLabs post-call / conversation webhook → "
+        f"{base}/agent/elevenlabs/event"
+    )
 
 
 if __name__ == "__main__":

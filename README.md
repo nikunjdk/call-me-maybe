@@ -35,7 +35,12 @@ python -m app.policy.bench --compare
 
 ## Frontend
 
-Next.js 15 four-screen demo (upload → plan → call → summary) against the local backend. Leave Auth0 off (`AUTH_DISABLED=true`). Without Twilio, `NEXT_PUBLIC_FAKE_EVENTS=auto` replays a canned call after approve.
+Next.js 15 four-screen demo (upload → plan → call → summary) against the local backend. Leave Auth0 off (`AUTH_DISABLED=true`).
+
+**Live vs fake**
+
+- **Fake (default):** Without Twilio credentials, approve still advances and `NEXT_PUBLIC_FAKE_EVENTS=auto` replays a canned call after approve.
+- **Live:** Fill Twilio + ElevenLabs in `backend/.env`, tunnel `PUBLIC_BASE_URL` / `AGENT_WEBHOOK_BASE_URL`, set `NEXT_PUBLIC_FAKE_EVENTS=0`, then follow [`docs/demo-script.md`](docs/demo-script.md).
 
 ```bash
 cd frontend
@@ -44,4 +49,4 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. `.env` should keep `NEXT_PUBLIC_API_BASE=http://localhost:8000`, `AUTH_DISABLED=true`, and `NEXT_PUBLIC_FAKE_EVENTS=auto`.
+Open http://localhost:3000. `.env` should keep `NEXT_PUBLIC_API_BASE=http://localhost:8000`, `AUTH_DISABLED=true`. Use `NEXT_PUBLIC_FAKE_EVENTS=auto` without Twilio; use `0` for the live conference path.

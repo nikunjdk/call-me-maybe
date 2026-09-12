@@ -25,6 +25,7 @@ that haven't started.
 - [x] Per-turn transcript emission: after every completed turn `POST /agent/transcript`; handle `ALLOW` vs `ESCALATE` inside the turn loop before speaking again
   - `backend/app/agent/turn_loop.py` `on_turn_complete`. Test: session + turn → ALLOW; escalate_now → block.
 - [ ] T-6 integration checkpoint with A — agent joins Twilio conference; set telephony audio to 8kHz μ-law explicitly; go/no-go called out
+  - Code path: POST /twilio/voice/agent via register_call + add_agent_leg from dial(); needs live Twilio/EL keys + PUBLIC_BASE_URL.
 - [ ] Escalation end-to-end: fee line → gate/tool escalate → stall → C signals browser; tune stall so it does not clip
 - [x] Latency pass: trim prompt/preamble/turn detection; target under ~1.2s per turn; minimize pre-escalation turn count
   - `prompts/system_v2.md`, shorter first_message, turn_timeout 5; synced. Re-measure on live call with A.
@@ -38,3 +39,4 @@ that haven't started.
 - Prompt v1 + escalate tool synced; turn_loop + client wired; transfer_to_number fallback schema ready.
 - Latency: system_v2 synced; AGENT_WEBHOOK_BASE_URL deferred until Vultr — re-run sync_agent.py then.
 - Widget soak via sim_fee.py (fee → escalate signal). settings.py reads agent_id from config fallback.
+- Live demo path: register_call agent leg + /agent/elevenlabs/event + escalate session_id dynamic_variable; awaiting user Twilio/EL secrets + tunnel.

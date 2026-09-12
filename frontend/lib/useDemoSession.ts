@@ -42,6 +42,7 @@ const INITIAL: DemoState = {
 };
 
 const VOICE_STATES: SessionState[] = [
+  "PLAN_PENDING",
   "PLAN_APPROVED",
   "DIALING",
   "IN_CALL",
@@ -326,6 +327,17 @@ export function useDemoSession() {
     setBusy(true);
     setError(null);
     try {
+      // Device must be registered before A adds the browser conference leg.
+      if (voiceStatus !== "muted" && voiceStatus !== "live") {
+        const token = await api.getVoiceToken(demo.sessionId);
+        if (token) {
+          voiceAttemptedRef.current = true;
+          const ok = await joinMuted(token);
+          setVoiceStatus(ok ? "muted" : "unavailable");
+        } else {
+          setVoiceStatus("unavailable");
+        }
+      }
       const result = await api.approvePlan(demo.sessionId);
       setDemo((current) => ({
         ...current,
@@ -336,7 +348,7 @@ export function useDemoSession() {
     } finally {
       setBusy(false);
     }
-  }, [demo.sessionId]);
+  }, [demo.sessionId, voiceStatus]);
 
   const takeover = useCallback(async () => {
     if (!demo.sessionId) return;

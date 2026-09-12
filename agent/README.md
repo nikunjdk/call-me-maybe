@@ -9,9 +9,10 @@ config live here — not as dashboard-only state.
 | `config/` | Agent id, voice, turn-taking, tool schema as code |
 | `PROGRESS.md` | Checklist for this workstream |
 
-Runtime helpers that call C's `/agent/*` stubs live in
-`backend/app/agent/`. Do not edit `backend/app/main.py` or
-`backend/app/routers/agent.py`.
+Runtime helpers that call C's `/agent/*` routes live in
+`backend/app/agent/`. Telephony join is `POST /twilio/voice/agent`
+(ElevenLabs `register_call`). Transcript ingress for the live gate is
+`POST /agent/elevenlabs/event` (plus contract `POST /agent/transcript`).
 
 ## Sync to ElevenLabs
 
@@ -20,8 +21,12 @@ Runtime helpers that call C's `/agent/*` stubs live in
 backend/.venv/Scripts/python agent/sync_agent.py
 ```
 
-When Vultr (or a tunnel) is up, set in `backend/.env` then re-sync:
+When a tunnel is up, set in `backend/.env` then re-sync:
 
 ```env
+PUBLIC_BASE_URL=https://<public-backend-host>
 AGENT_WEBHOOK_BASE_URL=https://<public-backend-host>
 ```
+
+Point the ElevenLabs Agents conversation / post-call webhook at
+`{AGENT_WEBHOOK_BASE_URL}/agent/elevenlabs/event` so turns hit C's gate.

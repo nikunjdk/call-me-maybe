@@ -14,7 +14,7 @@
       "properties": {
         "session_id": {
           "type": "string",
-          "description": "CallMeMaybe session_id for this call"
+          "dynamic_variable": "session_id"
         },
         "reason": {
           "type": "string",

@@ -32,7 +32,7 @@ Wrong-step URLs redirect to the step that matches session state. Unknown `sessio
 ## Env
 
 - `NEXT_PUBLIC_API_BASE` — C's FastAPI origin
-- `NEXT_PUBLIC_FAKE_EVENTS` — `auto` (default) replays a canned call if no live events arrive after approve; `1` always; `0` never
+- `NEXT_PUBLIC_FAKE_EVENTS` — `auto` (default) replays a canned call if no live events arrive after approve; `1` always; `0` never (live Twilio demo)
 - `AUTH_DISABLED` — `true` skips Auth0. Set `false` and fill `AUTH0_*` + `APP_BASE_URL` to require sign-in
 
-`GET /api/session/{id}/voice-token` and `POST /api/session/{id}/takeover` are called as specified. Until C adds them, the UI still runs (browser leg shows unavailable; takeover still starts the attention timer).
+`GET /api/session/{id}/voice-token` is fetched on the plan screen (before approve) so the muted browser leg can join when A dials. `POST /api/session/{id}/takeover` unmutes the browser. Until Twilio is configured, the UI still runs (browser leg shows unavailable; takeover still starts the attention timer).

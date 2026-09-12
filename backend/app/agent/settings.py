@@ -25,6 +25,7 @@ def elevenlabs_agent_id() -> str | None:
 def webhook_base_url() -> str:
     return (
         os.getenv("AGENT_WEBHOOK_BASE_URL")
+        or os.getenv("PUBLIC_BASE_URL")
         or os.getenv("BACKEND_PUBLIC_URL")
         or "http://127.0.0.1:8000"
     ).rstrip("/")

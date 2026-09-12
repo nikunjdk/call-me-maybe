@@ -23,6 +23,7 @@ class TwilioConfig:
     caller_number: str
     sim_rep_number: str
     live_rep_number: str
+    agent_number: str
     rep_mode: str
     public_base_url: str
     validate_signature: bool
@@ -49,6 +50,10 @@ class TwilioConfig:
     @property
     def dial_ready(self) -> bool:
         return self.rest_ready and bool(self.caller_number and self.rep_number)
+
+    @property
+    def agent_leg_ready(self) -> bool:
+        return bool(self.public_base_url and self.caller_number)
 
     def missing_token(self) -> list[str]:
         names = [
@@ -79,6 +84,12 @@ class TwilioConfig:
         base = self.public_base_url.rstrip("/")
         return f"{base}/twilio/status?session_id={session_id}"
 
+    def agent_voice_url(self, session_id: str) -> str | None:
+        if not self.public_base_url:
+            return None
+        base = self.public_base_url.rstrip("/")
+        return f"{base}/twilio/voice/agent?session_id={session_id}"
+
 
 def load_config() -> TwilioConfig:
     return TwilioConfig(
@@ -90,6 +101,7 @@ def load_config() -> TwilioConfig:
         caller_number=_env("TWILIO_CALLER_NUMBER"),
         sim_rep_number=_env("TWILIO_SIM_REP_NUMBER"),
         live_rep_number=_env("TWILIO_LIVE_REP_NUMBER"),
+        agent_number=_env("TWILIO_AGENT_NUMBER"),
         rep_mode=_env("REP_MODE", "scripted").lower() or "scripted",
         public_base_url=_env("PUBLIC_BASE_URL"),
         validate_signature=_env("TWILIO_VALIDATE_SIGNATURE", "false").lower()

@@ -97,6 +97,70 @@ def add_browser_leg(
     return participant
 
 
+def add_agent_leg(
+    client: Client,
+    config: TwilioConfig,
+    runtime: CallRuntime,
+    status_url: str | None,
+):
+    """Dial Leg B so Twilio hits /twilio/voice/agent → ElevenLabs register_call TwiML.
+
+    Preferred: participants.create to TWILIO_AGENT_NUMBER (Voice URL must point at
+    {PUBLIC_BASE_URL}/twilio/voice/agent). Fallback: outbound Calls.create with
+    url=agent webhook when no third number is configured.
+    """
+    agent_url = config.agent_voice_url(runtime.session_id)
+    if not agent_url:
+        raise RuntimeError("PUBLIC_BASE_URL required to dial agent leg")
+
+    if config.agent_number:
+        participant = client.conferences(runtime.conference).participants.create(
+            from_=config.caller_number,
+            to=config.agent_number,
+            label="agent",
+            beep=False,
+            muted=False,
+            start_conference_on_enter=True,
+            end_conference_on_exit=END_CONFERENCE_ON_EXIT,
+            early_media=True,
+            **_status_kwargs(status_url),
+        )
+        runtime.agent_call_sid = getattr(participant, "call_sid", None)
+        if getattr(participant, "conference_sid", None):
+            runtime.conference_sid = participant.conference_sid
+        logger.info(
+            "agent leg via participant session_id=%s call_sid=%s to=%s",
+            runtime.session_id,
+            runtime.agent_call_sid,
+            config.agent_number,
+        )
+        return participant
+
+    # Fallback: explicit webhook URL so register_call TwiML is fetched.
+    to_number = config.caller_number
+    status_kwargs = {}
+    if status_url:
+        status_kwargs = {
+            "status_callback": status_url,
+            "status_callback_event": STATUS_EVENTS,
+        }
+    call = client.calls.create(
+        from_=config.caller_number,
+        to=to_number,
+        url=agent_url,
+        method="POST",
+        **status_kwargs,
+    )
+    runtime.agent_call_sid = getattr(call, "sid", None)
+    logger.info(
+        "agent leg via calls.create fallback session_id=%s call_sid=%s url=%s",
+        runtime.session_id,
+        runtime.agent_call_sid,
+        agent_url,
+    )
+    return call
+
+
 def unmute_browser(client: Client, runtime: CallRuntime) -> None:
     client.conferences(runtime.conference).participants("browser").update(
         muted=False,

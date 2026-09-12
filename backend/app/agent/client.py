@@ -13,6 +13,7 @@ DEFAULT_BASE = "http://127.0.0.1:8000"
 def _base_url() -> str:
     return (
         os.getenv("AGENT_WEBHOOK_BASE_URL")
+        or os.getenv("PUBLIC_BASE_URL")
         or os.getenv("BACKEND_PUBLIC_URL")
         or DEFAULT_BASE
     ).rstrip("/")

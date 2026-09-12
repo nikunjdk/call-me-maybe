@@ -17,7 +17,9 @@ from app.telephony.runtime import (
     session_id_from_identity,
     start_call,
 )
+from app.telephony.elevenlabs_twilio import register_agent_call_twiml
 from app.telephony.twilio_ops import (
+    add_agent_leg,
     add_browser_leg,
     add_rep_leg,
     hangup_agent,
@@ -26,6 +28,7 @@ from app.telephony.twilio_ops import (
     unmute_browser,
 )
 from app.telephony.twiml import browser_twiml, rep_twiml
+from twilio.twiml.voice_response import VoiceResponse
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +142,23 @@ async def dial(session_id: str) -> dict:
         logger.exception("rep leg failed session_id=%s", session_id)
         raise HTTPException(status_code=502, detail="twilio dial failed") from exc
 
+    if config.agent_leg_ready:
+        try:
+            add_agent_leg(client, config, runtime, status_url)
+        except Exception:
+            logger.warning(
+                "agent leg failed session_id=%s; set TWILIO_AGENT_NUMBER + "
+                "ELEVENLABS_* + PUBLIC_BASE_URL for Leg B",
+                session_id,
+                exc_info=True,
+            )
+    else:
+        logger.warning(
+            "agent leg skipped session_id=%s; need PUBLIC_BASE_URL and "
+            "TWILIO_CALLER_NUMBER (optional TWILIO_AGENT_NUMBER)",
+            session_id,
+        )
+
     try:
         add_browser_leg(client, config, runtime, status_url)
     except Exception:
@@ -153,6 +173,7 @@ async def dial(session_id: str) -> dict:
         "session_id": session_id,
         "state": session.state.value,
         "conference": runtime.conference,
+        "agent_call_sid": runtime.agent_call_sid,
     }
 
 
@@ -218,6 +239,54 @@ async def voice_browser(request: Request, session_id: str | None = None) -> Resp
     get_session(resolved)
     config = load_config()
     return _xml(browser_twiml(resolved, status_url=config.status_url(resolved)))
+
+
+@router.post("/twilio/voice/agent")
+async def voice_agent(request: Request, session_id: str | None = None) -> Response:
+    """Twilio Voice webhook for Leg B — ElevenLabs register_call TwiML."""
+    form = {str(k): str(v) for k, v in (await request.form()).items()}
+    resolved = resolve_session_id(form, session_id)
+    if not resolved:
+        raise HTTPException(status_code=400, detail="session_id required")
+    session = get_session(resolved)
+    config = load_config()
+
+    from_number = _form_get(form, "From", "Caller") or config.caller_number
+    to_number = (
+        _form_get(form, "To", "Called")
+        or config.agent_number
+        or config.caller_number
+    )
+    if not from_number or not to_number:
+        raise HTTPException(
+            status_code=503,
+            detail="twilio agent voice missing From/To and TWILIO_CALLER_NUMBER",
+        )
+
+    try:
+        twiml = register_agent_call_twiml(
+            session_id=resolved,
+            from_number=from_number,
+            to_number=to_number,
+            session=session,
+            direction="inbound",
+        )
+    except Exception:
+        logger.exception("register_call failed session_id=%s", resolved)
+        error = VoiceResponse()
+        error.say(
+            "Sorry — the automated assistant could not join this call.",
+            voice="Polly.Joanna",
+        )
+        error.hangup()
+        return _xml(str(error))
+
+    call_sid = _form_get(form, "CallSid")
+    runtime = get_runtime(resolved)
+    if runtime is not None and call_sid:
+        remember_call_sid(runtime, "agent", call_sid)
+
+    return _xml(twiml)
 
 
 @router.post("/twilio/status")
