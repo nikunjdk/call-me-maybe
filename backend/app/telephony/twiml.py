@@ -25,8 +25,9 @@ def rep_lines(session: Session | None = None) -> tuple[str, str, str]:
     """The three scripted-rep utterances — shared by TwiML and the transcript clock."""
     passenger, pnr, flight, date = _booking_bits(session)
     greeting = (
-        "Thank you for calling United Reservations. This call may be recorded. "
-        "How can I help you today?"
+        "Hello, this is an AI assistant calling on behalf of Kohav Dey. "
+        "I have their booking reference 8H2FED for Japan Airlines JL 030 "
+        "on 2026-08-17. They would like to cancel this reservation."
     )
     fee = (
         f"I found the booking for {passenger}, confirmation {pnr}, "
