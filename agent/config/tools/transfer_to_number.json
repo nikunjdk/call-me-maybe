@@ -1,0 +1,9 @@
+{
+  "name": "transfer_to_number",
+  "type": "system",
+  "description": "T-6 fallback warm-transfer if Twilio conference path fails. Prefer escalate webhook in normal flow.",
+  "params": {
+    "system_tool_type": "transfer_to_number"
+  },
+  "note": "Enable on agent only if conference integration fails; set destination + warm message in ElevenLabs dashboard/API."
+}

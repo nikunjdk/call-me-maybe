@@ -1,6 +1,11 @@
 # Member C role brief — local only
 docs/roles/CallMeMaybe-C-Backend-Gate.md
 
+.cursorignore
+docs/
+
+.cursor/rules/member-b-agent.mdc
+
 # Secrets
 .env
 .env.local
