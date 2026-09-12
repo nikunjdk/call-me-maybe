@@ -78,6 +78,10 @@ class Session(BaseModel):
     plan: Plan | None = None
     summary: Summary | None = None
     verdicts: list[PolicyVerdict] = Field(default_factory=list)
+    transcripts: list[dict] = Field(default_factory=list)
+    call_started_ts: int | None = None
+    human_unmuted_ts: int | None = None
+    call_ended_ts: int | None = None
 
 
 class EventEnvelope(BaseModel):
@@ -109,3 +113,13 @@ class TranscriptRequest(BaseModel):
 class EscalateRequest(BaseModel):
     session_id: str
     reason: str
+
+
+class TimestampsRequest(BaseModel):
+    call_started_ts: int | None = None
+    human_unmuted_ts: int | None = None
+    call_ended_ts: int | None = None
+
+
+class StatePatchRequest(BaseModel):
+    state: SessionState
