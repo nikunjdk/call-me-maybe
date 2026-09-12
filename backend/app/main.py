@@ -10,6 +10,7 @@ from app.db import connect as connect_db
 from app.events import router as events_router
 from app.routers.agent import router as agent_router
 from app.routers.session import router as session_router
+from app.telephony.router import router as telephony_router
 
 load_dotenv()
 
@@ -39,6 +40,7 @@ app.add_middleware(
 app.include_router(session_router)
 app.include_router(agent_router)
 app.include_router(events_router)
+app.include_router(telephony_router)
 
 
 @app.get("/health")
