@@ -1,0 +1,31 @@
+{
+  "name": "CallMeMaybe Voice Agent",
+  "agent_id": "agent_2201m2ac4zx4fbfr7gchwckrtyw5",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voice_name": "Matilda",
+  "tts_model_id": "eleven_flash_v2",
+  "prompt_file": "prompts/system_v2.md",
+  "tags": [
+    "call-me-maybe",
+    "hackcmu"
+  ],
+  "first_message": "Hi \u2014 I'm an AI calling on behalf of the account holder with an approved booking request.",
+  "turn_taking": {
+    "turn_timeout": 5,
+    "silence_end_call_timeout": -1
+  },
+  "telephony": {
+    "input_format": "ulaw_8000",
+    "output_format": "ulaw_8000",
+    "note": "Set explicitly for Twilio Media Streams \u2014 do not rely on browser defaults"
+  },
+  "tools": [
+    "config/tools/escalate.json"
+  ],
+  "fallback": {
+    "tool": "transfer_to_number",
+    "note": "ElevenLabs native warm-transfer if conference path fails at T-6"
+  },
+  "escalate_tool_id": "tool_8001m2acejwmfnbats6h64jnfx82",
+  "webhook_base_url": "http://127.0.0.1:8000"
+}
