@@ -22,3 +22,8 @@ async def test_transcript_fail_closed_then_blocks_agent_turns(fake_llm) -> None:
             json={"session_id": session_id, "speaker": "agent", "text": "continuing"},
         )
         assert second.status_code == 409
+        third = await client.post(
+            "/agent/tool/escalate",
+            json={"session_id": session_id, "reason": "already escalating"},
+        )
+        assert third.status_code == 409
