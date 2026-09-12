@@ -4,6 +4,7 @@ from collections import defaultdict
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.db import persist_event
 from app.models import EventEnvelope, EventType, SessionState
 from app.store import get_session_or_none
 
@@ -26,6 +27,7 @@ async def emit_event(session_id: str, type: EventType, data: dict) -> EventEnvel
         data=data,
     )
     payload = envelope.model_dump()
+    await persist_event(envelope)
     dead: list[WebSocket] = []
     for ws in list(_subscribers.get(session_id, ())):
         try:

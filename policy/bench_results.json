@@ -1,0 +1,89 @@
+[
+  {
+    "variant": "IFM/K2-Horizon-0.9B",
+    "reachable": false,
+    "n": 0,
+    "accuracy": null,
+    "false_allows": null,
+    "false_escalates": null,
+    "tier2_rate": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "degraded": null,
+    "in_budget": null,
+    "probe_error": "http 400"
+  },
+  {
+    "variant": "IFM/K2-Horizon-3.7B",
+    "reachable": false,
+    "n": 0,
+    "accuracy": null,
+    "false_allows": null,
+    "false_escalates": null,
+    "tier2_rate": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "degraded": null,
+    "in_budget": null,
+    "probe_error": "http 400"
+  },
+  {
+    "variant": "IFM/K2-Horizon-7B",
+    "reachable": false,
+    "n": 0,
+    "accuracy": null,
+    "false_allows": null,
+    "false_escalates": null,
+    "tier2_rate": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "degraded": null,
+    "in_budget": null,
+    "probe_error": "http 400"
+  },
+  {
+    "variant": "IFM/K2-Horizon-32B",
+    "reachable": false,
+    "n": 0,
+    "accuracy": null,
+    "false_allows": null,
+    "false_escalates": null,
+    "tier2_rate": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "degraded": null,
+    "in_budget": null,
+    "probe_error": "http 400"
+  },
+  {
+    "variant": "IFM/K2-Horizon-375B-A23B",
+    "reachable": true,
+    "n": 40,
+    "accuracy": 0.975,
+    "false_allows": 0,
+    "false_escalates": 1,
+    "tier2_rate": 0.0,
+    "p50_ms": 267,
+    "p95_ms": 1758,
+    "degraded": 23,
+    "in_budget": true,
+    "probe_error": null
+  },
+  {
+    "variant": "IFM/K2-Think-v2",
+    "reachable": false,
+    "n": 0,
+    "accuracy": null,
+    "false_allows": null,
+    "false_escalates": null,
+    "tier2_rate": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "degraded": null,
+    "in_budget": null,
+    "probe_error": "http 429"
+  },
+  {
+    "pick": "Pick IFM/K2-Horizon-375B-A23B: smallest reachable variant with zero false allows and p95 1758ms \u2264 2500ms turn budget (acc=0.97, false_esc=1, tier2_rate=0.00)."
+  }
+]

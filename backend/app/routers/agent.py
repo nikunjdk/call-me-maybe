@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException
 
 from app.canned import canned_escalate
+from app.db import persist_verdict
 from app.events import emit_event, emit_state
 from app.models import EscalateRequest, PolicyVerdict, TranscriptRequest
 from app.policy.gate import classify
-from app.store import agent_turns_blocked, append_verdict, escalate, get_session
+from app.store import agent_turns_blocked, append_transcript, append_verdict, escalate, get_session
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -22,6 +23,7 @@ async def post_transcript(body: TranscriptRequest) -> PolicyVerdict:
         "transcript_turn",
         {"speaker": body.speaker, "text": body.text},
     )
+    append_transcript(body.session_id, body.speaker, body.text)
     verdict = await classify(body.text)
     if verdict.verdict == "ESCALATE":
         session = escalate(body.session_id, verdict)
@@ -36,9 +38,11 @@ async def post_transcript(body: TranscriptRequest) -> PolicyVerdict:
             {"reason": verdict.reason, "verdict": verdict.model_dump()},
         )
         await emit_state(body.session_id, session.state)
+        await persist_verdict(body.session_id, verdict)
         return verdict
     append_verdict(body.session_id, verdict)
     await emit_event(body.session_id, "policy_verdict", verdict.model_dump())
+    await persist_verdict(body.session_id, verdict)
     return verdict
 
 
@@ -49,4 +53,5 @@ async def post_escalate(body: EscalateRequest) -> PolicyVerdict:
     session = escalate(body.session_id, verdict)
     await emit_event(body.session_id, "escalation", {"reason": body.reason, "verdict": verdict.model_dump()})
     await emit_state(body.session_id, session.state)
+    await persist_verdict(body.session_id, verdict)
     return verdict

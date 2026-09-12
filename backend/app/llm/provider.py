@@ -139,7 +139,7 @@ def _message_text(message: dict) -> str:
         joined = "".join(parts).strip()
         if joined:
             return joined
-    reasoning = message.get("reasoning_content")
+    reasoning = message.get("reasoning_content") or message.get("reasoning")
     if isinstance(reasoning, str):
         return reasoning
     return content if isinstance(content, str) else ""

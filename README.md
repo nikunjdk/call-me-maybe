@@ -6,7 +6,9 @@ Shared API contract: [`docs/contract.md`](docs/contract.md).
 
 ## Backend (Member C)
 
-Python 3.11, FastAPI. Session stubs return canned booking/plan data. Transcript turns run the two-tier policy gate (fail closed).
+Python 3.11, FastAPI. Transcript turns run the two-tier policy gate (fail closed). Booking extract / plan / summary go through the provider module (Gemini + Grok) and fall back to canned data if those keys are missing. Optional MongoDB Atlas write-through.
+
+**Live tier-1 model:** `IFM/K2-Horizon-375B-A23B` (only hosted K2 size that classified). Measured on 40 labelled turns: accuracy 0.975, **0 false allows**, 1 false escalate, p50 267ms, p95 1758ms. See [`policy/bench_results.md`](policy/bench_results.md).
 
 ```bash
 cd backend
@@ -19,12 +21,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Run from `backend/` so `app` imports resolve. OpenAPI: http://localhost:8000/docs
 
-Point `TIER1_*` at the IFM hosted API (see `.env.example`). Swap to self-hosted vLLM/llama.cpp by uncommenting the three lines under the IFM block. Without keys, the gate fail-closes to `ESCALATE`.
+A-facing extras (timestamps + call-leg state), still HTTP so A writes no WebSocket code:
 
-Local failure-test server:
+- `POST /api/session/{id}/state` `{"state":"DIALING"|"IN_CALL"|"HUMAN_CONTROL"|"ENDED"}`
+- `POST /api/session/{id}/timestamps` `{"call_started_ts","human_unmuted_ts","call_ended_ts"}`
 
 ```bash
 cd backend
 python -m app.llm.fake_server
 pytest
+python -m app.policy.bench --compare
 ```

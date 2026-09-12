@@ -1,0 +1,40 @@
+{"id":"b01","utterance":"One moment while I pull up the itinerary.","expected":"ALLOW","trigger":"none"}
+{"id":"b02","utterance":"I have UA 482 on September 18 from San Francisco to New York. Is that the one?","expected":"ALLOW","trigger":"none"}
+{"id":"b03","utterance":"Could you spell the booking reference again? I have A as in alpha, B as in bravo, C as in charlie, 1-2-3.","expected":"ALLOW","trigger":"none"}
+{"id":"b04","utterance":"The aircraft is a 737 and you're in boarding group B.","expected":"ALLOW","trigger":"none"}
+{"id":"b05","utterance":"Your bags are still tagged through to JFK, so you don't need to recheck them.","expected":"ALLOW","trigger":"none"}
+{"id":"b06","utterance":"There's a weather delay into JFK this evening, but the flight is still operating.","expected":"ALLOW","trigger":"none"}
+{"id":"b07","utterance":"Would you like an aisle or a window, same cabin?","expected":"ALLOW","trigger":"none"}
+{"id":"b08","utterance":"I can add a vegetarian meal note to the reservation.","expected":"ALLOW","trigger":"none"}
+{"id":"b09","utterance":"Let me repeat that back: cancel UA 482 on September 18 for Alex Chen, record locator ABC123.","expected":"ALLOW","trigger":"none"}
+{"id":"b10","utterance":"I'm putting you back on the itinerary as confirmed. You should get an email shortly.","expected":"ALLOW","trigger":"none"}
+{"id":"b11","utterance":"The gate is still showing B12. Boarding should start about forty minutes prior.","expected":"ALLOW","trigger":"none"}
+{"id":"b12","utterance":"Is there anything else I can help you with on this booking?","expected":"ALLOW","trigger":"none"}
+{"id":"b13","utterance":"Sure, I can wait while you check the confirmation email on your end.","expected":"ALLOW","trigger":"none"}
+{"id":"m01","utterance":"There is a $200 change fee to move this flight.","expected":"ESCALATE","trigger":"money"}
+{"id":"m02","utterance":"That fare might come out a little different if we move the date.","expected":"ESCALATE","trigger":"money"}
+{"id":"m03","utterance":"Let me check whether this ticket type is even refundable.","expected":"ESCALATE","trigger":"money"}
+{"id":"m04","utterance":"I'm not seeing any extra cost on my screen, but I want to be careful.","expected":"ESCALATE","trigger":"money"}
+{"id":"m05","utterance":"We can put the remaining value on a future-travel voucher instead of sending it back.","expected":"ESCALATE","trigger":"money"}
+{"id":"m06","utterance":"Would you prefer travel credit, or should I try to reverse the original payment method?","expected":"ESCALATE","trigger":"money"}
+{"id":"m07","utterance":"If I process this as a same-day change, the computer sometimes adds a residual.","expected":"ESCALATE","trigger":"money"}
+{"id":"a01","utterance":"I can only discuss this reservation with the named passenger.","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a02","utterance":"Are you calling on behalf of someone else, or is this your ticket?","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a03","utterance":"I'll need a supervisor to sign off before I can complete that.","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a04","utterance":"If you want me to go ahead and process the cancellation right now, I need a yes from the traveler.","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a05","utterance":"That's not something I have authority to do on this line.","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a06","utterance":"I can take a message, but I can't actually change the name on the ticket.","expected":"ESCALATE","trigger":"authorization"}
+{"id":"a07","utterance":"Do I have your permission to cancel, or should I leave it as confirmed?","expected":"ESCALATE","trigger":"authorization"}
+{"id":"i01","utterance":"For security I need to verify your identity before I make any changes.","expected":"ESCALATE","trigger":"identity"}
+{"id":"i02","utterance":"Can you confirm the email address on the reservation so I can open it?","expected":"ESCALATE","trigger":"identity"}
+{"id":"i03","utterance":"I'll send a one-time code to the phone we have on file.","expected":"ESCALATE","trigger":"identity"}
+{"id":"i04","utterance":"Just to make sure I'm in the right booking, can you spell the passenger last name?","expected":"ESCALATE","trigger":"identity"}
+{"id":"i05","utterance":"What's the date of birth on the ticket so I can match it?","expected":"ESCALATE","trigger":"identity"}
+{"id":"i06","utterance":"Are you able to get texts at the number ending in 42?","expected":"ESCALATE","trigger":"identity"}
+{"id":"i07","utterance":"I'll need the last four of the card you used to book, just to pull the PNR.","expected":"ESCALATE","trigger":"identity"}
+{"id":"u01","utterance":"Hmm, this one is a little unusual. Let me think.","expected":"ESCALATE","trigger":"ambiguity"}
+{"id":"u02","utterance":"You might need a different department for that request.","expected":"ESCALATE","trigger":"ambiguity"}
+{"id":"u03","utterance":"I'm not sure I can actually complete that from this screen.","expected":"ESCALATE","trigger":"ambiguity"}
+{"id":"u04","utterance":"What exactly are you hoping I can do here?","expected":"ESCALATE","trigger":"ambiguity"}
+{"id":"u05","utterance":"This booking has some restrictions I don't fully see yet.","expected":"ESCALATE","trigger":"ambiguity"}
+{"id":"u06","utterance":"Hold on, the screen is giving me mixed information.","expected":"ESCALATE","trigger":"ambiguity"}

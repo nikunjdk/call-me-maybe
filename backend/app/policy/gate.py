@@ -76,6 +76,14 @@ def _parse_classification(parsed: dict | None) -> tuple[Verdict, Trigger, str, f
     return verdict, trigger, reason, conf
 
 
+def _max_tokens(role: str) -> int:
+    raw = os.environ.get(f"{role}_MAX_TOKENS", "256").strip() or "256"
+    try:
+        return int(raw)
+    except ValueError:
+        return 256
+
+
 def _uncertain_threshold() -> float:
     raw = os.environ.get("GATE_UNCERTAIN_THRESHOLD", "").strip()
     if not raw:
@@ -86,7 +94,7 @@ def _uncertain_threshold() -> float:
         return UNCERTAIN
 
 
-async def classify(utterance: str) -> PolicyVerdict:
+async def classify(utterance: str, *, use_tier2: bool = True) -> PolicyVerdict:
     started = time.perf_counter()
     notes: list[str] = []
     hard = hard_check(utterance)
@@ -98,7 +106,7 @@ async def classify(utterance: str) -> PolicyVerdict:
             {"role": "user", "content": utterance},
         ],
         temperature=0,
-        max_tokens=256,
+        max_tokens=_max_tokens("TIER1"),
     )
 
     def wall() -> int:
@@ -160,6 +168,21 @@ async def classify(utterance: str) -> PolicyVerdict:
         )
 
     notes.append(f"uncertain band ({confidence:.2f}) → tier2")
+    if not use_tier2:
+        notes.append("tier2 skipped (eval)")
+        return PolicyVerdict(
+            verdict=verdict,
+            trigger=trigger,
+            reason=reason,
+            confidence=confidence,
+            tier=1,
+            latency_ms=wall(),
+            tier1_latency_ms=t1.latency_ms,
+            tier2_latency_ms=None,
+            provider_label=t1.provider_label,
+            degraded=False,
+            notes=notes,
+        )
     t2 = await chat(
         "TIER2",
         [
@@ -174,7 +197,7 @@ async def classify(utterance: str) -> PolicyVerdict:
             },
         ],
         temperature=0,
-        max_tokens=256,
+        max_tokens=_max_tokens("TIER2"),
     )
     if not t2.ok:
         return _degraded(
