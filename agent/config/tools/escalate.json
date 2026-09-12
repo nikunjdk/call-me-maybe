@@ -1,0 +1,30 @@
+{
+  "name": "escalate",
+  "type": "webhook",
+  "description": "Hand the call to the human account holder. Call immediately on fees/charges/payment, authorization requests, identity checks you cannot satisfy from the booking, unanswerable questions, or three ambiguous turns. After calling, say the stall phrase and stop.",
+  "api_schema": {
+    "url": "{{AGENT_WEBHOOK_BASE_URL}}/agent/tool/escalate",
+    "method": "POST",
+    "request_headers": {
+      "Content-Type": "application/json"
+    },
+    "request_body_schema": {
+      "type": "object",
+      "description": "Contract POST /agent/tool/escalate body",
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "description": "CallMeMaybe session_id for this call"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Trigger (money|authorization|identity|ambiguity), short rep quote, and one-sentence brief for the user on takeover"
+        }
+      },
+      "required": ["session_id", "reason"]
+    }
+  },
+  "response_timeout_secs": 15,
+  "pre_tool_speech": "force",
+  "execution_mode": "immediate"
+}
